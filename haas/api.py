@@ -294,7 +294,7 @@ def node_connect_network(node, nic, network, channel=None):
     if nic.current_action:
         raise BlockedError("A networking operation is already active on the nic.")
 
-    if (network.access is not None) and (network.access is not project):
+    if (network.access) and (project not in network.access):
         raise ProjectMismatchError("Project does not have access to given network.")
 
     if _have_attachment(nic, model.NetworkAttachment.network == network):
@@ -490,7 +490,7 @@ def headnode_connect_network(headnode, hnic, network):
 
     project = headnode.project
 
-    if (network.access is not None) and (network.access is not project):
+    if (network.access) and (project not in network.access):
         raise ProjectMismatchError("Project does not have access to given network.")
 
     hnic.network = network
@@ -547,14 +547,14 @@ def network_create(network, creator, access, net_id):
         if net_id != "":
             raise BadArgumentError("Project-created networks must use network ID allocation")
         creator = _must_find(model.Project, creator)
-        access = _must_find(model.Project, access)
+        access = [_must_find(model.Project, access)]
     else:
         # Administrator-owned network
         creator = None
         if access == "":
-            access = None
+            access = []
         else:
-            access = _must_find(model.Project, access)
+            access = [_must_find(model.Project, access)]
 
     # Allocate net_id, if requested
     if net_id == "":
@@ -614,8 +614,8 @@ def show_network(network):
     else:
         result['creator'] = network.creator.label
 
-    if network.access is not None:
-        result['access'] = network.access.label
+    if network.access:
+       result['access'] = [p.label for p in network.access]
 
     return json.dumps(result)
 

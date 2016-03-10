@@ -1416,7 +1416,7 @@ class Test_show_network:
         assert result == {
             'name': 'spiderwebs',
             'creator': 'anvil-nextgen',
-            'access': 'anvil-nextgen',
+            'access': ['anvil-nextgen'],
             "channels": ["null"]
         }
 
@@ -1444,7 +1444,7 @@ class Test_show_network:
         assert result == {
             'name': 'spiderwebs',
             'creator': 'admin',
-            'access': 'anvil-nextgen',
+            'access': ['anvil-nextgen'],
             'channels': ['null'],
         }
 
@@ -1467,7 +1467,7 @@ class TestFancyNetworkCreate:
         project = api._must_find(model.Project, 'anvil-nextgen')
         network = api._must_find(model.Network, 'hammernet')
         assert network.creator is project
-        assert network.access is project
+        assert project in network.access
         assert network.allocated is True
 
     def test_project_network_imported_fails(self, db):
@@ -1495,7 +1495,7 @@ class TestFancyNetworkCreate:
                 api.network_create(network, 'admin', project_api, net_id)
                 network = api._must_find(model.Network, network)
                 assert network.creator is None
-                assert network.access is project_db
+                assert (project_db is None and not network.access) or project_db in network.access
                 assert network.allocated is allocated
             network = api._must_find(model.Network, 'hammernet' + project_api + '35')
             assert network.network_id == '35'
