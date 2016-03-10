@@ -23,7 +23,7 @@ dry_run=True
 [extensions]
 haas.ext.switches.mock =
 
-# haas.ext.network_allocators.null =
+haas.ext.network_allocators.null =
 #
 # Depending on what you're trying to do, you may want to use the vlan_pool
 # network allocator instead of the null allocator. To do this, comment out the
