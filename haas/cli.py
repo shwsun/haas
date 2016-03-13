@@ -186,6 +186,20 @@ def project_remove_user(project, user):
     url = object_url('project', project, 'remove_user')
     do_post(url, data={'user': user})
 
+
+@cmd
+def project_add_network(project, network):
+   """Add <network> to <project>"""
+   url = object_url('project', project, 'add_network')
+   do_post(url, data={'network': network})
+
+
+@cmd
+def project_remove_network(project, network):
+   """Remove <network> from <project>"""
+   url = object_url('project', project, 'remove_network')
+   do_post(url, data={'network': network})
+
 @cmd
 def project_create(project):
     """Create a <project>"""

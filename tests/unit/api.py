@@ -187,6 +187,36 @@ class TestProjectAddDeleteUser:
             api.project_remove_user('acme-corp', 'alice')
 
 
+class TestProjectAddDeleteNetwork:
+     """Tests for adding and deleting a network from a project"""
+     
+     def test_project_add_network(self, db):
+         api.project_create('acme-corp')
+         api.project_create('anvil-nextgen')
+         network_create_simple('hammernet', 'acme-corp')
+         api.project_add_network('anvil-nextgen', 'hammernet')
+         network = api._must_find(model.Network, 'hammernet')
+         project = api._must_find(model.Project, 'anvil-nextgen')
+         assert project in network.access
+         assert network in project.networks_access
+         
+     def test_project_remove_network(self, db):
+         api.project_create('acme-corp')
+         api.project_create('anvil-nextgen')
+         network_create_simple('hammernet', 'acme-corp')
+         api.project_add_network('anvil-nextgen', 'hammernet')
+         api.project_remove_network('anvil-nextgen', 'hammernet')
+         network = api._must_find(model.Network, 'hammernet')
+         project = api._must_find(model.Project, 'anvil-nextgen')
+         assert project not in network.access
+         assert network not in project.networks_access
+
+     def test_project_remove_network_creator(self, db):
+         api.project_create('acme-corp')
+         network_create_simple('hammernet', 'acme-corp')
+         with pytest.raises(api.BlockedError):
+             api.project_remove_network('acme-corp', 'hammernet')
+
 class TestNetworking:
 
     def test_networking_involved(self, db):

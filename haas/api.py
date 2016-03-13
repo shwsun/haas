@@ -179,6 +179,45 @@ def project_remove_user(project, user):
     local.db.commit()
 
 
+@rest_call('POST', '/project/<project>/add_network')
+def project_add_network(project, network):
+   """Add a network to a project.
+
+   If the project or network does not exist, a NotFoundError will be raised.
+   """
+   network = _must_find(model.Network, network)
+   project = _must_find(model.Project, project)
+   if project in network.access:
+       raise DuplicateError('Network %s is already in project %s'%
+                            (network.label, project.label))
+
+   network.access.append(project)
+   local.db.commit()
+
+
+
+@rest_call('POST', '/project/<project>/remove_network')
+def project_remove_network(project, network):
+   """Remove a network from a project.
+
+   If the project or network does not exist, a NotFoundError will be raised.
+   If the project is the creator of the netwrok a BlockedError will be raised.
+   """
+   network = _must_find(model.Network, network)
+   project = _must_find(model.Project, project)
+   if project not in network.access:
+       raise NotFoundError("Network %s is not in project %s"%
+                           (network.label, project.label))
+
+   if project is network.creator:
+    raise BlockedError("Project %s is creator of network %s and cannot be removed"%
+                       (project.label, network.label))
+
+   network.access.remove(project)
+   local.db.commit()
+
+
+
                             # Node Code #
                             #############
 
