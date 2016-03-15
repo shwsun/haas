@@ -1304,6 +1304,33 @@ class TestQuery:
             }
         assert actual == expected
 
+        def test_list_network_attachments_for_project(self, db):
+            api.node_register('node-99', 'ipmihost', 'root', 'tapeworm')
+            api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
+            api.project_create('anvil-nextgen')
+            api.project_connect_node('anvil-nextgen', 'node-99')
+            network_create_simple('hammernet', 'anvil-nextgen')
+            api.node_connect_network('node-99', '99-eth0', 'hammernet')
+            deferred.apply_networking()
+            api.node_register('node-100', 'ipmihost', 'root', 'tapeworm')
+            api.node_register_nic('node-100', '100-eth0', 'DE:AD:BE:EF:20:14')
+            api.project_create('anvil-oldtimer')
+            api.project_connect_node('anvil-oldtimer', 'node-100')
+            api.project_add_network('anvil-oldtimer', 'hammernet')
+            api.node_connect_network('node-100', '100-eth0', 'hammernet')
+            deferred.apply_networking()
+
+            actual = json.loads(api.list_network_attachments('hammernet', 'anvil-nextgen'))
+            expected = {
+                'node-99':
+                {
+                    'nic': '99-eth0',
+                    'project': 'anvil-nextgen'
+                },
+            }
+            
+            assert actual == expected
+
     def test_no_free_nodes(self, db):
         assert json.loads(api.list_free_nodes()) == []
 
