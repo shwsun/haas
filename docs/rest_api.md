@@ -153,6 +153,26 @@ Response body (on success):
 		"netB": {"driver_id": "102", "projects": None
 	 }
 
+### list_network_attachments
+
+`GET /network/<network>/attachments`
+
+List all nodes that are attached to network <network>.
+
+
+    Returns a JSON dictionary of dictionaries with first level key being the name of the attached node and second level keys being:
+    
+    * 'nic': the name of the nic on which the node is attached
+    * 'project': the name of the project which owns the attached node
+
+
+Response body (on success):
+
+	 {
+		"node1": {"nic": "nic1", "project": "projectA"}, 
+		"node2": {"nic": "nic2", "project": "projectB"}
+	 }
+
 ### show_network
 
 `GET /network/<network>`

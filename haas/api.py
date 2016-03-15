@@ -574,6 +574,39 @@ def list_networks():
             
     return json.dumps(result, sort_keys = True)
 
+@rest_call('GET', '/network/<network>/attachments')
+def list_network_attachments(network, project=None):
+
+    """List all nodes that are attached to the network.
+
+api.node_register('node-99', 'ipmihost', 'root', 'tapeworm')
+        api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
+        api.project_create('anvil-nextgen')
+        api.project_connect_node('anvil-nextgen', 'node-99')
+        network_create_simple('hammernet', 'anvil-nextgen')
+
+    
+    Returns a JSON dictionary of dictionaries with first level key being the name of the attached node and second level keys being:
+    'nic': the name of the nic on which the node is attached
+    'project': the name of the project which owns the attached node
+
+    Example:  {"node1": {"nic": "nic1", "project": "projectA"}, "node2": {"nic": "nic2", "project": "projectB"}}
+    """
+    network = _must_find(model.Network, network)
+    attachments = network.attachments
+    nodes = {}
+
+    if project is not None:
+        project = _must_find(model.Project, project)
+
+    for attachment in attachments: 
+        if project is None or project is attachment.nic.owner.project:
+            node = {'nic': attachment.nic.label, 'project': attachment.nic.owner.project.label}
+            nodes[attachment.nic.owner.label] = node
+        
+    return json.dumps(nodes, sort_keys=True)
+
+
 @rest_call('PUT', '/network/<network>')
 def network_create(network, creator, access, net_id):
     """Create a network.
@@ -908,9 +941,9 @@ def show_headnode(nodename):
 @rest_call('GET', '/headnode_images/')
 def list_headnode_images():
     """Show headnode images listed in config file.
-
+    
     Returns a JSON array of strings representing a list of headnode images.
-
+    
     Example:  '["headnode1.img", "headnode2.img", "headnode3.img"]'
     """
     valid_imgs = cfg.get('headnode', 'base_imgs')
