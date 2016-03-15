@@ -554,6 +554,25 @@ def headnode_detach_network(headnode, hnic):
                             # Network Code #
                             ################
 
+@rest_call('GET', '/networks')
+def list_networks():
+    """List all networks.
+    Returns a JSON dictionary of dictionaries, indexed by the name of the network.
+    The interior dictionaries are indexed by project and channel.
+    
+    Example:  {"netA": {"driver_id": "101", "projects": ["qproj-01", qproj-02"]}, "netB": {"driver_id": "102", "projects": None}}
+    """
+    db = local.db
+    networks = db.query(model.Network).all()
+    result = {}
+    for n in networks:
+        if n.access:
+            net = {'driver_id': n.network_id, 'projects': [p.label for p in n.access]}
+        else:
+            net = {'driver_id': n.network_id, 'projects': None}
+        result[n.label] = net
+            
+    return json.dumps(result, sort_keys = True)
 
 @rest_call('PUT', '/network/<network>')
 def network_create(network, creator, access, net_id):
@@ -654,7 +673,9 @@ def show_network(network):
         result['creator'] = network.creator.label
 
     if network.access:
-       result['access'] = [p.label for p in network.access]
+        result['access'] = [p.label for p in network.access]
+    else:
+        result['access'] = None
 
     return json.dumps(result)
 

@@ -19,7 +19,7 @@ from haas.test_common import *
 from haas.rest import RequestContext
 import pytest
 import json
-
+import uuid
 
 MOCK_SWITCH_TYPE = 'http://schema.massopencloud.org/haas/v0/switches/mock'
 
@@ -1252,6 +1252,27 @@ class TestQuery:
             'runway',
         ]
 
+    def test_list_networks(self, db):
+        assert json.loads(api.list_networks()) == {}
+        api.project_create('anvil-nextgen')
+        network_create_simple('netA', 'anvil-nextgen')
+        result = json.loads(api.list_networks())
+        temp1 = uuid.UUID(result['netA']['driver_id'])
+        del result['netA']['driver_id']
+        assert result == {
+            'netA': {'projects': ['anvil-nextgen']}
+        }
+        api.network_delete('netA')
+        api.network_create('spiderwebs',
+                           creator='admin',
+                           access='',
+                           net_id='451')
+
+        result = json.loads(api.list_networks())
+        assert result == {
+            'spiderwebs': {'driver_id': '451', 'projects':None}
+        }
+
     def test_no_free_nodes(self, db):
         assert json.loads(api.list_free_nodes()) == []
 
@@ -1460,7 +1481,8 @@ class Test_show_network:
         assert result == {
             'name': 'public-network',
             'creator': 'admin',
-            'channels': ['null'],
+            'access': None,
+            'channels': ['null']
         }
 
     def test_show_network_provider(self, db):

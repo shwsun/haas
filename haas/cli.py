@@ -386,6 +386,12 @@ def list_project_networks(project):
     do_get(url)
 
 @cmd
+def list_networks():
+    """List all networks"""
+    url = object_url('networks')
+    do_get(url)
+
+@cmd
 def show_network(network):
     """Display information about <network>"""
     url = object_url('network', network)
