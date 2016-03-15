@@ -88,6 +88,20 @@ Possible errors:
 
 Delete the user whose username is `<username>`
 
+## Projects
+
+### project_add_network
+
+`POST /project/<project>/add_network`
+
+Add a network to project named <project>.
+
+### project_remove_network
+
+`POST /project/<project>/remove_network`
+
+Remove a network from a project named <project>.
+
 ## Networks
 
 ### network_create
@@ -123,6 +137,21 @@ Possible Errors:
 * 409 if:
     * The network is connected to a node or headnode.
     * There are pending actions involving the network.
+
+### list_networks
+
+`GET /networks`
+
+List all networks
+
+The result contains a JSON dictionary of dictionaries. The first-level dictionary has keys equal to the names of the networks, with values being another dictionary containing the keys `driver_id` and `projects`.
+
+Response body (on success):
+
+	 {
+		"netA": {"driver_id": "101", "projects": ["qproj-01", qproj-02"]}, 
+		"netB": {"driver_id": "102", "projects": None
+	 }
 
 ### show_network
 

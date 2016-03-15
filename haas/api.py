@@ -201,7 +201,7 @@ def project_remove_network(project, network):
    """Remove a network from a project.
 
    If the project or network does not exist, a NotFoundError will be raised.
-   If the project is the creator of the netwrok a BlockedError will be raised.
+   If the project is the creator of the network a BlockedError will be raised.
    """
    network = _must_find(model.Network, network)
    project = _must_find(model.Project, project)
