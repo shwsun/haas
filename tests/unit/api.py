@@ -1274,14 +1274,22 @@ class TestQuery:
         }
 
     def test_list_network_attachments(self, db):
-        api.node_register('node-99', 'ipmihost', 'root', 'tapeworm')
+        api.node_register('node-99', obm={
+		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+		  "host": "ipmihost", 
+		  "user": "root", 
+		  "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
         network_create_simple('hammernet', 'anvil-nextgen')
         api.node_connect_network('node-99', '99-eth0', 'hammernet')
         deferred.apply_networking()
-        api.node_register('node-100', 'ipmihost', 'root', 'tapeworm')
+        api.node_register('node-100', obm={
+		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+		  "host": "ipmihost", 
+		  "user": "root", 
+		  "password": "tapeworm"})        
         api.node_register_nic('node-100', '100-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-oldtimer')
         api.project_connect_node('anvil-oldtimer', 'node-100')
