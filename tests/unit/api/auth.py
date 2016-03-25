@@ -83,13 +83,13 @@ def db(request):
     networks = [
         {
             'creator': None,
-            'access': None,
+            'access': [],
             'allocated': True,
             'label': 'stock_int_pub',
         },
         {
             'creator': None,
-            'access': None,
+            'access': [],
             'allocated': False,
             'network_id': 'ext_pub_chan',
             'label': 'stock_ext_pub',
@@ -99,32 +99,32 @@ def db(request):
             # network. This one serves that purpose; using the others would
             # interfere with some of the network_delete tests.
             'creator': None,
-            'access': None,
+            'access': [],
             'allocated': True,
             'label': 'pub_default',
         },
         {
             'creator': runway,
-            'access': runway,
+            'access': [runway],
             'allocated': True,
             'label': 'runway_pxe'
         },
         {
             'creator': None,
-            'access': runway,
+            'access': [runway],
             'allocated': False,
             'network_id': 'runway_provider_chan',
             'label': 'runway_provider',
         },
         {
             'creator': manhattan,
-            'access': manhattan,
+            'access': [manhattan],
             'allocated': True,
             'label': 'manhattan_pxe'
         },
         {
             'creator': None,
-            'access': manhattan,
+            'access': [manhattan],
             'allocated': False,
             'network_id': 'manhattan_provider_chan',
             'label': 'manhattan_provider',
@@ -134,7 +134,7 @@ def db(request):
     for net in networks:
         if net['allocated']:
             net['network_id'] = \
-                get_network_allocator().get_new_network_id(session)
+                                get_network_allocator().get_new_network_id(session)
         session.add(model.Network(**net))
 
     # ... Two switches. One of these is just empty, for testing deletion:

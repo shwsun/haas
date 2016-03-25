@@ -1560,14 +1560,22 @@ class TestQuery:
         assert actual == expected
 
     def test_list_network_attachments_for_project(self, db):
-        api.node_register('node-99', 'ipmihost', 'root', 'tapeworm')
+        api.node_register('node-99', obm={
+		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+		  "host": "ipmihost", 
+		  "user": "root", 
+		  "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
         network_create_simple('hammernet', 'anvil-nextgen')
         api.node_connect_network('node-99', '99-eth0', 'hammernet')
         deferred.apply_networking()
-        api.node_register('node-100', 'ipmihost', 'root', 'tapeworm')
+        api.node_register('node-100', obm={
+		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+		  "host": "ipmihost", 
+		  "user": "root", 
+		  "password": "tapeworm"})
         api.node_register_nic('node-100', '100-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-oldtimer')
         api.project_connect_node('anvil-oldtimer', 'node-100')
@@ -1893,7 +1901,7 @@ class Test_show_network:
         assert result == {
             'name': 'public-network',
             'creator': 'admin',
-            'access': 'None',
+            'access': None,
             'channels': ['null']
         }
 
@@ -1959,7 +1967,10 @@ class TestFancyNetworkCreate:
                 api.network_create(network, 'admin', project_api, net_id)
                 network = api._must_find(model.Network, network)
                 assert network.creator is None
-                assert project_db in network.access
+                if project_db is None:
+                    assert not network.access
+                else:
+                    assert project_db in network.access
                 assert network.allocated is allocated
             network = api._must_find(model.Network, 'hammernet' + project_api + '35')
             assert network.network_id == '35'

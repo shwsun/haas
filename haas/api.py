@@ -701,8 +701,14 @@ def show_network(network):
     network = _must_find(model.Network, network)
 
     if network.access:
+        #auth tests: admin created networks with a project access
         #TODO only network creator allowed to show the network?
-        auth_backend.require_project_access(network.creator)
+        authorized = False
+        for proj in network.access:
+            authorized = authorized or auth_backend.have_project_access(proj)
+            
+        if not authorized:
+            raise AuthorizationError("You do not have access to this network.")
 
     result = {
         'name': network.label,
