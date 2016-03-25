@@ -158,10 +158,16 @@ def project_remove_network(project, network):
    """
    network = _must_find(model.Network, network)
    project = _must_find(model.Project, project)
-   #must be admin or the creator of the network to add projects
-   get_auth_backend().have_project_access(network.creator)
-   #TODO: projects should be able to remove themselves
+   #must be admin, the creator of the network, or <project> to remove <project>.
+   authorized = get_auth_backend().have_project_access(network.creator)
 
+   if network.access:
+       for proj in network.access:
+           authorized = authorized or ((proj.label == project.label) and get_auth_backend().have_project_access(proj))
+           
+   if not authorized:
+        raise AuthorizationError("You do not have access to this project.")
+   
    if project not in network.access:
        raise NotFoundError("Network %s is not in project %s"%
                            (network.label, project.label))
