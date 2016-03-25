@@ -133,7 +133,45 @@ def project_detach_node(project, node):
     project.nodes.remove(node)
     local.db.commit()
 
+@rest_call('POST', '/project/<project>/add_network')
+def project_add_network(project, network):
+   """Add access to <network> to <project>.
+   If the project or network does not exist, a NotFoundError will be raised.
+   """
+   network = _must_find(model.Network, network)
+   project = _must_find(model.Project, project)
+   #must be admin or the creator of the network to add projects
+   get_auth_backend().have_project_access(network.creator)
 
+   if project in network.access:
+       raise DuplicateError('Network %s is already in project %s'%
+                            (network.label, project.label))
+
+   network.access.append(project)
+   local.db.commit()
+
+@rest_call('POST', '/project/<project>/remove_network')
+def project_remove_network(project, network):
+   """Remove a network from a project.
+   If the project or network does not exist, a NotFoundError will be raised.
+   If the project is the creator of the network a BlockedError will be raised.
+   """
+   network = _must_find(model.Network, network)
+   project = _must_find(model.Project, project)
+   #must be admin or the creator of the network to add projects
+   get_auth_backend().have_project_access(network.creator)
+   #TODO: projects should be able to remove themselves
+
+   if project not in network.access:
+       raise NotFoundError("Network %s is not in project %s"%
+                           (network.label, project.label))
+
+   if project is network.creator:
+    raise BlockedError("Project %s is creator of network %s and cannot be removed"%
+                       (project.label, network.label))
+
+   network.access.remove(project)
+   local.db.commit()
                             # Node Code #
                             #############
 
@@ -275,7 +313,7 @@ def node_connect_network(node, nic, network, channel=None):
     if nic.current_action:
         raise BlockedError("A networking operation is already active on the nic.")
 
-    if (network.access is not None) and (network.access is not project):
+    if (network.access) and (project not in network.access):
         raise ProjectMismatchError("Project does not have access to given network.")
 
     if _have_attachment(nic, model.NetworkAttachment.network == network):
@@ -481,7 +519,7 @@ def headnode_connect_network(headnode, hnic, network):
 
     project = headnode.project
 
-    if (network.access is not None) and (network.access is not project):
+    if (network.access) and (project not in network.access):
         raise ProjectMismatchError("Project does not have access to given network.")
 
     hnic.network = network
@@ -507,6 +545,59 @@ def headnode_detach_network(headnode, hnic):
                             # Network Code #
                             ################
 
+@rest_call('GET', '/networks')
+def list_networks():
+    """List all networks.
+    Returns a JSON dictionary of dictionaries, indexed by the name of the network.
+    The interior dictionaries are indexed by project and channel.
+    
+    Example:  {"netA": {"driver_id": "101", "projects": ["qproj-01", qproj-02"]}, "netB": {"driver_id": "102", "projects": None}}
+    """
+    get_auth_backend().require_admin()
+
+    db = local.db
+    networks = db.query(model.Network).all()
+    result = {}
+    for n in networks:
+        if n.access:
+            net = {'driver_id': n.network_id, 'projects': [p.label for p in n.access]}
+        else:
+            net = {'driver_id': n.network_id, 'projects': None}
+        result[n.label] = net
+            
+    return json.dumps(result, sort_keys = True)
+
+@rest_call('GET', '/network/<network>/attachments')
+def list_network_attachments(network, project=None):
+
+    """List all nodes that are attached to the network.
+api.node_register('node-99', 'ipmihost', 'root', 'tapeworm')
+        api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
+        api.project_create('anvil-nextgen')
+        api.project_connect_node('anvil-nextgen', 'node-99')
+        network_create_simple('hammernet', 'anvil-nextgen')
+    
+    Returns a JSON dictionary of dictionaries with first level key being the name of the attached node and second level keys being:
+    'nic': the name of the nic on which the node is attached
+    'project': the name of the project which owns the attached node
+    Example:  {"node1": {"nic": "nic1", "project": "projectA"}, "node2": {"nic": "nic2", "project": "projectB"}}
+    """
+    network = _must_find(model.Network, network)
+    #only the creator of the network should be able to list attached nodes
+    get_auth_backend().require_project_access(network.creator)   
+    #TODO: a project should be able to use the optional project parameter to list only its attached nodes
+    attachments = network.attachments
+    nodes = {}
+
+    if project is not None:
+        project = _must_find(model.Project, project)
+
+    for attachment in attachments: 
+        if project is None or project is attachment.nic.owner.project:
+            node = {'nic': attachment.nic.label, 'project': attachment.nic.owner.project.label}
+            nodes[attachment.nic.owner.label] = node
+        
+    return json.dumps(nodes, sort_keys=True)
 
 @rest_call('PUT', '/network/<network>')
 def network_create(network, creator, access, net_id):
@@ -541,15 +632,15 @@ def network_create(network, creator, access, net_id):
             raise BadArgumentError("Project-created networks must be accessed only by that project.")
         if net_id != "":
             raise BadArgumentError("Project-created networks must use network ID allocation")
-        access = _must_find(model.Project, access)
+        access = [_must_find(model.Project, access)]    
     else:
         # Administrator-owned network
         auth_backend.require_admin()
         creator = None
         if access == "":
-            access = None
+            access = []
         else:
-            access = _must_find(model.Project, access)
+            access = [_must_find(model.Project, access)]
 
     # Allocate net_id, if requested
     if net_id == "":
@@ -609,8 +700,9 @@ def show_network(network):
 
     network = _must_find(model.Network, network)
 
-    if network.access is not None:
-        auth_backend.require_project_access(network.access)
+    if network.access:
+        #TODO only network creator allowed to show the network?
+        auth_backend.require_project_access(network.creator)
 
     result = {
         'name': network.label,
@@ -621,8 +713,10 @@ def show_network(network):
     else:
         result['creator'] = network.creator.label
 
-    if network.access is not None:
-        result['access'] = network.access.label
+    if network.access:
+        result['access'] = [p.label for p in network.access]
+    else:
+        result['access'] = None
 
     return json.dumps(result, sort_keys=True)
 

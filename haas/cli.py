@@ -217,6 +217,19 @@ def user_remove_project(user, project):
     do_post(url, data={'project': project})
 
 @cmd
+def project_add_network(project, network):
+   """Add <network> to <project>"""
+   url = object_url('project', project, 'add_network')
+   do_post(url, data={'network': network})
+
+
+@cmd
+def project_remove_network(project, network):
+   """Remove <network> from <project>"""
+   url = object_url('project', project, 'remove_network')
+   do_post(url, data={'network': network})
+
+@cmd
 def project_create(project):
     """Create a <project>"""
     url = object_url('project', project)
@@ -423,6 +436,12 @@ def list_project_nodes(project):
 def list_project_networks(project):
     """List all networks attached to a <project>"""
     url = object_url('project', project, 'networks')
+    do_get(url)
+
+@cmd
+def list_networks():
+    """List all networks"""
+    url = object_url('networks')
     do_get(url)
 
 @cmd

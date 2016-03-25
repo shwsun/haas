@@ -1,4 +1,4 @@
-# Copyright 2013-2015 Massachusetts Open Cloud Contributors
+#Copyright 2013-2015 Massachusetts Open Cloud Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the
@@ -30,6 +30,10 @@ import os
 Base=declarative_base()
 Session = sessionmaker()
 
+# A joining table for networks and projects, which have a many to many relationship:
+network_projects = Table('network_projects', Base.metadata,
+                    Column('project_id', ForeignKey('project.id')),
+                    Column('network_id', ForeignKey('network.id')))
 
 def init_db(create=False, uri=None):
     """Start up the DB connection.
@@ -146,13 +150,12 @@ class Network(Model):
     creator    = relationship("Project",
                               backref=backref('networks_created'),
                               foreign_keys=[creator_id])
-    # The project that has access to the network, or None if the network is
+    # The projects that have access to the network, or None if the network is
     # public.  This field determines who can connect a node or headnode to a
     # network.
-    access_id = Column(ForeignKey('project.id'))
     access    = relationship("Project",
                              backref=backref('networks_access'),
-                             foreign_keys=[access_id])
+                             secondary='network_projects')
     # True if network_id was allocated by the driver; False if it was
     # assigned by an administrator.
     allocated = Column(Boolean)
