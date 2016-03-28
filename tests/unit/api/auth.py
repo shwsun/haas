@@ -378,6 +378,57 @@ for net in [
         project='runway',
         args=[net]))
 
+
+# project_add_network
+
+## Legal cases
+
+### admin should be able to add  access to a network
+### for any project (that does not already have access)
+for (project, net) in [
+    ('manhattan', 'runway_provider'),
+    ('runway', 'manhattan_provider'),
+    ('runway', 'manhattan_pxe'),
+    ('manhattan', 'runway_pxe'),
+]:
+    auth_call_params.append(dict(
+        fn=api.project_add_network,
+        error=None,
+        admin=True,
+        project=None,
+        args=[project, net]
+    ))
+
+### project that is the creator of the network should 
+### be able to add access for other projects 
+for (project, project_access, net) in [
+    ('manhattan', 'runway', 'manhattan_pxe'),
+    ('runway', 'manhattan', 'runway_pxe'),
+]:
+    auth_call_params.append(dict(
+        fn=api.project_add_network,
+        error=None,
+        admin=False,
+        project=project,
+        args=[project_access, net]
+    ))
+
+
+## Illegal cases:
+
+### Projects other than the network creator should not be ble to grant access
+for (project, project_access, net) in [
+    ('manhattan', 'manhattan', 'runway_pxe'),
+    ('runway', 'runway', 'manhattan_pxe'),
+]:
+    auth_call_params.append(dict(
+        fn=api.project_add_network,
+        error=AuthorizationError,
+        admin=False,
+        project=project,
+        args=[project_access, net]
+    ))
+
 # project_remove_network
 
 ## Legal cases

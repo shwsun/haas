@@ -141,7 +141,7 @@ def project_add_network(project, network):
    network = _must_find(model.Network, network)
    project = _must_find(model.Project, project)
    #must be admin or the creator of the network to add projects
-   get_auth_backend().have_project_access(network.creator)
+   get_auth_backend().require_project_access(network.creator)
 
    if project in network.access:
        raise DuplicateError('Network %s is already in project %s'%
