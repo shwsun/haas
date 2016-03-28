@@ -95,7 +95,7 @@ def db(request):
             'label': 'stock_ext_pub',
         },
         {
-            # For some tests, we want things to initial be attached to a
+            # For some tests, we want things to initially be attached to a
             # network. This one serves that purpose; using the others would
             # interfere with some of the network_delete tests.
             'creator': None,
@@ -128,6 +128,19 @@ def db(request):
             'allocated': False,
             'network_id': 'manhattan_provider_chan',
             'label': 'manhattan_provider',
+        },
+        {
+            'creator': None,
+            'access': [manhattan, runway],
+            'allocated': False,
+            'network_id': 'manhattan_runway_provider_chan',
+            'label': 'manhattan_runway_provider',
+        },
+        {
+            'creator': manhattan,
+            'access': [manhattan, runway],
+            'allocated': True,
+            'label': 'manhattan_runway_pxe',
         },
     ]
 
@@ -342,6 +355,7 @@ for net in [
     'stock_int_pub',
     'stock_ext_pub',
     'runway_provider',  # ... including networks created for said project.
+    'manhattan_runway_provider',
 ]:
     auth_call_params.append(dict(
         fn=api.network_delete,
@@ -355,6 +369,7 @@ for net in [
 for net in [
     'manhattan_pxe',
     'manhattan_provider',
+    'manhattan_runway_pxe',
 ]:
     auth_call_params.append(dict(
         fn=api.network_delete,
@@ -362,6 +377,88 @@ for net in [
         admin=False,
         project='runway',
         args=[net]))
+
+# list_network_attachments
+
+## Legal cases
+
+### Admin should be able to list attachments for public network: 
+for net in ('stock_int_pub', 'stock_ext_pub'):
+    for project in ('runway', 'manhattan'):
+            auth_call_params.append(dict(
+                fn=api.list_network_attachments,
+                error=None,
+                admin=True,
+                project=project,
+                args=[net]
+            ))
+
+### Projects should be able to view their own nodes in a network:
+for (project, net) in [
+    ('runway', 'runway_pxe'),
+    ('runway', 'runway_provider'),
+    ('manhattan', 'manhattan_pxe'),
+    ('manhattan', 'manhattan_provider'),
+    ('manhattan', 'manhattan_runway_pxe'),
+    ('manhattan', 'manhattan_runway_provider'),
+    ('runway', 'manhattan_runway_pxe'),
+    ('runway', 'manhattan_runway_provider'),
+]:
+    auth_call_params.append(dict(
+        fn=api.list_network_attachments,
+        error=None,
+        admin=False,
+        project=project,
+        args=[net, project]
+    ))
+
+### Creator of a network should be able to view all nodes in the network:
+for (project, net) in [
+    ('runway', 'runway_pxe'),
+    ('manhattan', 'manhattan_pxe'),
+    ('manhattan', 'manhattan_runway_pxe'),
+]:
+    auth_call_params.append(dict(
+        fn=api.list_network_attachments,
+        error=None,
+        admin=False,
+        project=project,
+        args=[net, project]
+    ))
+
+
+## Illegal cases
+
+### Projects should not be able to list nodes that do not belong to them 
+### (on network they did not create)
+for (project, access_project, net) in [
+    ('runway', 'manhattan', 'manhattan_runway_pxe'),
+    ('runway', 'manhattan', 'manhattan_runway_provider'),
+    ('runway', None, 'manhattan_runway_pxe'),
+    ('runway', None, 'manhattan_runway_provider'),
+]:
+    auth_call_params.append(dict(
+        fn=api.list_network_attachments,
+        error=AuthorizationError,
+        admin=False,
+        project=project,
+        args=[net, access_project]
+    ))
+
+###or on networks they do not have access to
+for (project, net) in [
+    ('runway', 'manhattan_pxe'),
+    ('runway', 'manhattan_provider'),
+    ('manhattan', 'runway_pxe'),
+    ('manhattan', 'runway_provider'),
+]:
+    auth_call_params.append(dict(
+        fn=api.list_network_attachments,
+        error=AuthorizationError,
+        admin=False,
+        project=project,
+        args=[net, project]
+    ))
 
 # show_network
 
@@ -385,6 +482,10 @@ for (project, net) in [
     ('runway', 'runway_provider'),
     ('manhattan', 'manhattan_pxe'),
     ('manhattan', 'manhattan_provider'),
+    ('manhattan', 'manhattan_runway_pxe'),
+    ('manhattan', 'manhattan_runway_provider'),
+    ('runway', 'manhattan_runway_pxe'),
+    ('runway', 'manhattan_runway_provider'),
 ]:
     auth_call_params.append(dict(
         fn=api.show_network,

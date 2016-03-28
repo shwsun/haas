@@ -588,15 +588,22 @@ api.node_register('node-99', 'ipmihost', 'root', 'tapeworm')
     'project': the name of the project which owns the attached node
     Example:  {"node1": {"nic": "nic1", "project": "projectA"}, "node2": {"nic": "nic2", "project": "projectB"}}
     """
+    auth_backend = get_auth_backend()
     network = _must_find(model.Network, network)
-    #only the creator of the network should be able to list attached nodes
-    get_auth_backend().require_project_access(network.creator)   
-    #TODO: a project should be able to use the optional project parameter to list only its attached nodes
+    
     attachments = network.attachments
     nodes = {}
+    authorized = auth_backend.have_project_access(network.creator)
 
     if project is not None:
         project = _must_find(model.Project, project)
+        for proj in network.access:
+            authorized = authorized or ((proj.label == project.label) and auth_backend.have_project_access(project))
+        if not authorized:
+            raise AuthorizationError("You do not have access to this project.")
+    else:
+        #only the project that owns the network should be able to list attached nodes (for project created networks, this is network.creator)
+        auth_backend.require_project_access(network.creator)
 
     for attachment in attachments: 
         if project is None or project is attachment.nic.owner.project:
