@@ -378,6 +378,61 @@ for net in [
         project='runway',
         args=[net]))
 
+# project_remove_network
+
+## Legal cases
+
+### admin should be able to remove access to a network
+### for any project (that was not the creator of the network)
+###admin created networks with all the access removed will become public networks
+for (project, net) in [
+    ('runway', 'runway_provider'),
+    ('runway', 'manhattan_runway_pxe'),
+    ('manhattan', 'manhattan_provider'),
+    ('runway', 'manhattan_runway_provider'),
+    ('manhattan', 'manhattan_runway_provider'),
+]:
+    auth_call_params.append(dict(
+        fn=api.project_remove_network,
+        error=None,
+        admin=True,
+        project=None,
+        args=[project, net]
+    ))
+
+### project that is the creator of the network should 
+### be able to remove the access of other projects 
+### projects should be able to remove their own access
+for (project, project_access, net) in [
+    ('manhattan', 'runway', 'manhattan_runway_pxe'),
+    ('runway', 'runway', 'manhattan_runway_pxe'),
+    ('manhattan', 'manhattan', 'manhattan_runway_provider'),
+    ('runway', 'runway', 'manhattan_runway_provider'),
+]:
+    auth_call_params.append(dict(
+        fn=api.project_remove_network,
+        error=None,
+        admin=False,
+        project=project,
+        args=[project_access, net]
+    ))
+
+
+## Illegal cases:
+
+### Projects other than the network creator or the project
+### itself should  not be able to remove access of other projects
+for (project, project_access, net) in [
+    ('manhattan', 'runway', 'manhattan_runway_provider'),
+]:
+    auth_call_params.append(dict(
+        fn=api.project_remove_network,
+        error=AuthorizationError,
+        admin=False,
+        project=project,
+        args=[project_access, net]
+    ))
+
 # list_network_attachments
 
 ## Legal cases
@@ -423,7 +478,7 @@ for (project, net) in [
         error=None,
         admin=False,
         project=project,
-        args=[net, project]
+        args=[net]
     ))
 
 
