@@ -855,6 +855,23 @@ def show_port(port):
 
     return json.dumps(result, sort_keys=True)
 
+@rest_call('POST', '/port/<port>/revert')
+def revert_port(port):
+    get_auth_backend().require_admin()
+    port = _must_find(model.Port, port)
+    nic = port.nic
+    db = local.db
+    if nic is None:
+        return
+    #delete old entry and create new one
+    for a in nic.attachments:
+        db.query(model.NetworkAttachment)\
+                .filter_by(nic=a.nic, channel=a.channel)\
+                .delete()
+        db.add(model.NetworkingAction(nic=a.nic,
+                                      new_network=a.network,
+                                      channel=a.channel))
+        db.commit()
 
 @rest_call('POST', '/switch/<switch>/port/<path:port>/connect_nic')
 def port_connect_nic(switch, port, node, nic):

@@ -463,6 +463,12 @@ def show_port(port):
     do_get(url)
 
 @cmd
+def revert_port(port):
+    """Revert <port> to state in HaaS database"""
+    url = object_url('port', port, 'revert')
+    do_post(url)
+
+@cmd
 def list_project_headnodes(project):
     """List all headnodes attached to a <project>"""
     url = object_url('project', project, 'headnodes')
