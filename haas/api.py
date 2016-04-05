@@ -871,6 +871,7 @@ def revert_port(port):
         db.add(model.NetworkingAction(nic=a.nic,
                                       new_network=a.network,
                                       channel=a.channel))
+        port.owner.revert(port)
         db.commit()
 
 @rest_call('POST', '/switch/<switch>/port/<path:port>/connect_nic')

@@ -1972,10 +1972,11 @@ class TestShowSwitchPort:
         }
 
 class TestRevertPort:
-    def test_revert_port(self, db):
+    def test_revert_port_no_changes(self, db):
         api.switch_register('sw0', type=MOCK_SWITCH_TYPE, 
 		username="switch_user", password="switch_pass", hostname="switchname")
         api.switch_register_port('sw0', '3')
+        port = api._must_find(model.Port, '3')
         api.node_register('compute-01', obm={
 		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
 		  "host": "ipmihost", 
@@ -1989,12 +1990,13 @@ class TestRevertPort:
         network_create_simple('hammernet', 'anvil-nextgen')
         api.node_connect_network('compute-01', 'eth0', 'hammernet')
         deferred.apply_networking()
-
-        before = json.loads(api.show_port('3'))
+        before_switch = port.owner.get_port_networks([port])
+        before_haas = json.loads(api.show_port('3'))
         api.revert_port('3')
         deferred.apply_networking()
-        after = json.loads(api.show_port('3'))
-        assert before == after
+        after_haas = json.loads(api.show_port('3'))
+        after_switch = port.owner.get_port_networks([port])
+        assert before_haas == after_haas and before_switch == after_switch
 
 class TestFancyNetworkCreate:
     """Test creating network with advanced parameters.
