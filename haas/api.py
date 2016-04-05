@@ -740,6 +740,27 @@ def show_network(network):
     return json.dumps(result, sort_keys=True)
 
 
+
+@rest_call('GET', '/switch/<switch>')
+def show_switch(switch):
+    switch = _must_find(model.Switch, switch)
+    attachments = {}
+    get_auth_backend().require_admin()
+    for port in switch.ports:
+        attachments[port.label] = local.db.query(model.NetworkAttachment).filter(model.NetworkAttachment.Nic.port == port)
+
+    get_auth_backend().require_admin()
+    return json.dumps({
+        'switch': switch.label,
+	'ports': [{'name': port.label,
+                   'attachments': [{'nic': a.nic_id, 
+                                    'network': a.network_id,
+                                    'channel': a.channel,
+                                    'node': a.nic.owner,
+                                } for a in attachments[port.label]],
+                   } for port in switch.ports],
+        }, sort_keys=True)
+
 @rest_call('PUT', '/switch/<switch>', schema=Schema({
     'type': basestring,
     Optional(object): object,
@@ -803,6 +824,36 @@ def switch_delete_port(switch, port):
 
     local.db.delete(port)
     local.db.commit()
+
+@rest_call('GET', '/port/<port>')
+def show_port(port):
+    port = _must_find(model.Port, port)
+    attachment = None
+    if port.nic is not None:
+        for a in port.nic.attachments:
+            if a.nic.port.label == port.label:
+                attachment = a
+
+    get_auth_backend().require_admin()
+    result = {
+        'name': port.label,
+        'switch': port.owner.label,
+        'nic': port.nic.label
+    }
+
+    if port.nic is None:
+        result['node'] = None
+    else:
+        result['node'] = port.nic.owner.label
+
+    if attachment is None:
+        result['attachment'] = None
+    else:
+        result['attachment'] = {'network': attachment.network.label,
+                                'channel': attachment.channel,
+                                }
+
+    return json.dumps(result, sort_keys=True)
 
 
 @rest_call('POST', '/switch/<switch>/port/<path:port>/connect_nic')

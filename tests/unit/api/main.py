@@ -1213,7 +1213,6 @@ class TestNetworkCreateDelete:
         with pytest.raises(api.BlockedError):
             api.network_delete('hammernet')
 
-
 class Test_switch_register:
 
     def test_basic(self, db):
@@ -1918,6 +1917,29 @@ class Test_show_network:
             'creator': 'admin',
             'access': ['anvil-nextgen'],
             'channels': ['null'],
+        }
+
+class TestShowSwitchPort:
+
+    def test_show_port(self, db):
+        api.switch_register('sw0', type=MOCK_SWITCH_TYPE, 
+		username="switch_user", password="switch_pass", hostname="switchname")
+        api.switch_register_port('sw0', '3')
+        api.node_register('compute-01', obm={
+		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+		  "host": "ipmihost", 
+		  "user": "root", 
+		  "password": "tapeworm"})
+        api.node_register_nic('compute-01', 'eth0', 'DE:AD:BE:EF:20:14')
+        api.port_connect_nic('sw0', '3', 'compute-01', 'eth0')
+        
+        result = json.loads(api.show_port('3'))
+        assert result == {
+            'name': '3',
+            'switch': 'sw0',
+            'nic': 'eth0',
+            'node': 'compute-01',
+            'attachment': None,
         }
 
 

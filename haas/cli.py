@@ -457,6 +457,12 @@ def show_node(node):
     do_get(url)
 
 @cmd
+def show_port(port):
+    """Display information about a <port>"""
+    url = object_url('port', port)
+    do_get(url)
+
+@cmd
 def list_project_headnodes(project):
     """List all headnodes attached to a <project>"""
     url = object_url('project', project, 'headnodes')
