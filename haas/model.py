@@ -131,10 +131,10 @@ class Network(db.Model):
     # The project to which the network belongs, or None if the network was
     # created by the administrator.  This field determines who can delete a
     # network.
-    creator_id = db.Column(db.ForeignKey('project.id'))
-    creator    = db.relationship("Project",
+    owner_id = db.Column(db.ForeignKey('project.id'))
+    owner    = db.relationship("Project",
                                  backref=db.backref('networks_created'),
-                                 foreign_keys=[creator_id])
+                                 foreign_keys=[owner_id])
     # The project that has access to the network, or None if the network is
     # public.  This field determines who can connect a node or headnode to a
     # network.
@@ -148,7 +148,7 @@ class Network(db.Model):
     # An identifier meaningful to the networking driver:
     network_id    = db.Column(db.String, nullable=False)
 
-    def __init__(self, creator, access, allocated, network_id, label):
+    def __init__(self, owner, access, allocated, network_id, label):
         """Create a network.
 
         The network will belong to `project`, and have a symbolic name of
@@ -156,7 +156,7 @@ class Network(db.Model):
         the driver.
         """
         self.network_id = network_id
-        self.creator = creator
+        self.owner = owner
         self.access = access
         self.allocated = allocated
         self.label = label

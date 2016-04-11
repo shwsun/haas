@@ -165,10 +165,10 @@ def user_create(username, password, is_admin):
     })
 
 @cmd
-def network_create(network, creator, access, net_id):
+def network_create(network, owner, access, net_id):
     """Create a link-layer <network>.  See docs/networks.md for details"""
     url = object_url('network', network)
-    do_put(url, data={'creator': creator,
+    do_put(url, data={'owner': owner,
                       'access': access,
                       'net_id': net_id})
 
@@ -176,7 +176,7 @@ def network_create(network, creator, access, net_id):
 def network_create_simple(network, project):
     """Create <network> owned by project.  Specific case of network_create"""
     url = object_url('network', network)
-    do_put(url, data={'creator': project,
+    do_put(url, data={'owner': project,
                       'access': project,
                       'net_id': ""})
 

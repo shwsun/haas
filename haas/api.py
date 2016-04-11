@@ -140,8 +140,8 @@ def project_add_network(project, network):
    """
    network = _must_find(model.Network, network)
    project = _must_find(model.Project, project)
-   #must be admin or the creator of the network to add projects
-   get_auth_backend().require_project_access(network.creator)
+   #must be admin or the owner of the network to add projects
+   get_auth_backend().require_project_access(network.owner)
 
    if project in network.access:
        raise DuplicateError('Network %s is already in project %s'%
@@ -154,12 +154,12 @@ def project_add_network(project, network):
 def project_remove_network(project, network):
    """Remove a network from a project.
    If the project or network does not exist, a NotFoundError will be raised.
-   If the project is the creator of the network a BlockedError will be raised.
+   If the project is the owner of the network a BlockedError will be raised.
    """
    network = _must_find(model.Network, network)
    project = _must_find(model.Project, project)
-   #must be admin, the creator of the network, or <project> to remove <project>.
-   authorized = get_auth_backend().have_project_access(network.creator)
+   #must be admin, the owner of the network, or <project> to remove <project>.
+   authorized = get_auth_backend().have_project_access(network.owner)
 
    if network.access:
        for proj in network.access:
@@ -172,8 +172,8 @@ def project_remove_network(project, network):
        raise NotFoundError("Network %s is not in project %s"%
                            (network.label, project.label))
 
-   if project is network.creator:
-    raise BlockedError("Project %s is creator of network %s and cannot be removed"%
+   if project is network.owner:
+    raise BlockedError("Project %s is owner of network %s and its access cannot be removed"%
                        (project.label, network.label))
 
    network.access.remove(project)
@@ -590,7 +590,7 @@ api.node_register('node-99', 'ipmihost', 'root', 'tapeworm')
     
     attachments = network.attachments
     nodes = {}
-    authorized = auth_backend.have_project_access(network.creator)
+    authorized = auth_backend.have_project_access(network.owner)
 
     if project is not None:
         project = _must_find(model.Project, project)
@@ -599,30 +599,34 @@ api.node_register('node-99', 'ipmihost', 'root', 'tapeworm')
         if not authorized:
             raise AuthorizationError("You do not have access to this project.")
     else:
-        #only the project that owns the network should be able to list attached nodes (for project created networks, this is network.creator)
-        auth_backend.require_project_access(network.creator)
+        #only the project that owns the network should be able to list attached nodes
+        auth_backend.require_project_access(network.owner)
 
     for attachment in attachments: 
         if project is None or project is attachment.nic.owner.project:
-            node = {'nic': attachment.nic.label, 'project': attachment.nic.owner.project.label}
+            node = {
+                'nic': attachment.nic.label, 
+                'channel': attachment.channel, 
+                'project': attachment.nic.owner.project.label
+            }
             nodes[attachment.nic.owner.label] = node
         
     return json.dumps(nodes, sort_keys=True)
 
 @rest_call('PUT', '/network/<network>')
-def network_create(network, creator, access, net_id):
+def network_create(network, owner, access, net_id):
     """Create a network.
 
     If the network with that name already exists, a DuplicateError will be
     raised.
 
-    If the combination of creator, access, and net_id is illegal, a
+    If the combination of owner, access, and net_id is illegal, a
     BadArgumentError will be raised.
 
     If network ID allocation was requested, and the network cannot be
     allocated (due to resource exhaustion), an AllocationError will be raised.
 
-    Pass 'admin' as creator for an administrator-owned network.  Pass '' as
+    Pass 'admin' as owner for an administrator-owned network.  Pass '' as
     access for a publicly accessible network.  Pass '' as net_id if you wish
     to use the HaaS's network-id allocation pool.
 
@@ -632,20 +636,20 @@ def network_create(network, creator, access, net_id):
     auth_backend = get_auth_backend()
     _assert_absent(model.Network, network)
 
-    # Check authorization and legality of arguments, and find correct 'access' and 'creator'
-    if creator != "admin":
-        creator = _must_find(model.Project, creator)
-        auth_backend.require_project_access(creator)
+    # Check authorization and legality of arguments, and find correct 'access' and 'owner'
+    if owner != "admin":
+        owner = _must_find(model.Project, owner)
+        auth_backend.require_project_access(owner)
         # Project-owned network
-        if access != creator.label:
-            raise BadArgumentError("Project-created networks must be accessed only by that project.")
+        if access != owner.label:
+            raise BadArgumentError("Project-owned networks must be accessed only by that project.")
         if net_id != "":
-            raise BadArgumentError("Project-created networks must use network ID allocation")
+            raise BadArgumentError("Project-owned networks must use network ID allocation")
         access = [_must_find(model.Project, access)]    
     else:
         # Administrator-owned network
         auth_backend.require_admin()
-        creator = None
+        owner = None
         if access == "":
             access = []
         else:
@@ -660,7 +664,7 @@ def network_create(network, creator, access, net_id):
     else:
         allocated = False
 
-    network = model.Network(creator, access, allocated, net_id, network)
+    network = model.Network(owner, access, allocated, net_id, network)
     db.session.add(network)
     db.session.commit()
 
@@ -678,10 +682,10 @@ def network_delete(network):
 
     network = _must_find(model.Network, network)
 
-    if network.creator is None:
+    if network.owner is None:
         auth_backend.require_admin()
     else:
-        auth_backend.require_project_access(network.creator)
+        auth_backend.require_project_access(network.owner)
 
     if len(network.attachments) != 0:
         raise BlockedError("Network still connected to nodes")
@@ -709,8 +713,8 @@ def show_network(network):
     network = _must_find(model.Network, network)
 
     if network.access:
-        #auth tests: admin created networks with a project access
-        #TODO only network creator allowed to show the network?
+        #auth tests: admin owned networks with a project access
+        #TODO only network owner allowed to show the network?
         authorized = False
         for proj in network.access:
             authorized = authorized or auth_backend.have_project_access(proj)
@@ -722,10 +726,10 @@ def show_network(network):
         'name': network.label,
         'channels': allocator.legal_channels_for(network.network_id),
     }
-    if network.creator is None:
-        result['creator'] = 'admin'
+    if network.owner is None:
+        result['owner'] = 'admin'
     else:
-        result['creator'] = network.creator.label
+        result['owner'] = network.owner.label
 
     if network.access:
         result['access'] = [p.label for p in network.access]

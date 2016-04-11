@@ -156,7 +156,7 @@ auth_call_params = [
          project='runway',
          args=['pub', 'admin', '', '']),
 
-    ### Project tries to set creator to 'admin' on its own network:
+    ### Project tries to set owner to 'admin' on its own network:
     dict(fn=api.network_create,
          error=AuthorizationError,
          admin=False,
@@ -245,7 +245,7 @@ for (project, net) in [
         args=[project, net]
     ))
 
-### project that is the creator of the network should 
+### project that is the owner of the network should 
 ### be able to add access for other projects 
 for (project, project_access, net) in [
     ('manhattan', 'runway', 'manhattan_pxe'),
@@ -262,7 +262,7 @@ for (project, project_access, net) in [
 
 ## Illegal cases:
 
-### Projects other than the network creator should not be ble to grant access
+### Projects other than the network owner should not be ble to grant access
 for (project, project_access, net) in [
     ('manhattan', 'manhattan', 'runway_pxe'),
     ('runway', 'runway', 'manhattan_pxe'),
@@ -280,7 +280,7 @@ for (project, project_access, net) in [
 ## Legal cases
 
 ### admin should be able to remove access to a network
-### for any project (that was not the creator of the network)
+### for any project (that was not the owner of the network)
 ###admin created networks with all the access removed will become public networks
 for (project, net) in [
     ('runway', 'runway_provider'),
@@ -297,7 +297,7 @@ for (project, net) in [
         args=[project, net]
     ))
 
-### project that is the creator of the network should 
+### project that is the owner of the network should 
 ### be able to remove the access of other projects 
 ### projects should be able to remove their own access
 for (project, project_access, net) in [
@@ -317,7 +317,7 @@ for (project, project_access, net) in [
 
 ## Illegal cases:
 
-### Projects other than the network creator or the project
+### Projects other than the network owner or the project
 ### itself should  not be able to remove access of other projects
 for (project, project_access, net) in [
     ('manhattan', 'runway', 'manhattan_runway_provider'),
@@ -364,7 +364,7 @@ for (project, net) in [
         args=[net, project]
     ))
 
-### Creator of a network should be able to view all nodes in the network:
+### owner of a network should be able to view all nodes in the network:
 for (project, net) in [
     ('runway', 'runway_pxe'),
     ('manhattan', 'manhattan_pxe'),
@@ -382,7 +382,7 @@ for (project, net) in [
 ## Illegal cases
 
 ### Projects should not be able to list nodes that do not belong to them 
-### (on network they did not create)
+### (on network they do not own)
 for (project, access_project, net) in [
     ('runway', 'manhattan', 'manhattan_runway_pxe'),
     ('runway', 'manhattan', 'manhattan_runway_provider'),
