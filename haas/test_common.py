@@ -13,16 +13,16 @@
 # governing permissions and limitations under the License.
 
 from haas.model import *
+from haas.migrations import create_db
 from haas.config import cfg
-from haas import api, config, rest
+from haas.rest import app, init_auth
+from haas import api, config
 from StringIO import StringIO
 from abc import ABCMeta, abstractmethod
 import json
 import subprocess
 import sys
 import os.path
-
-from werkzeug.wrappers import Request
 
 
 def config_testsuite():
@@ -58,6 +58,8 @@ def config_testsuite():
                 'uri': 'sqlite:///:memory:',
             }
         })
+
+
 
 
 def config_merge(config_dict):
@@ -118,15 +120,14 @@ def network_create_simple(network, project):
 
 def newDB():
     """Configures and returns a connection to a freshly initialized DB."""
-    init_db(create=True)
-    return Session()
+    with app.app_context():
+        init_db()
+        create_db()
 
-def releaseDB(db):
+def releaseDB():
     """Do we need to do anything here to release resources?"""
-    db.close_all()
-    # According to the documentation, we shouldn't need the Session().bind, but this
-    # breaks without it.
-    Base.metadata.drop_all(Session().bind)
+    with app.app_context():
+        db.drop_all()
 
 def fresh_database(request):
     """Runs the test against a newly populated DB.
@@ -136,9 +137,20 @@ def fresh_database(request):
 
     This must run *after* the config file (or equivalent) has been loaded.
     """
-    db = newDB()
-    request.addfinalizer(lambda: releaseDB(db))
-    return db
+    newDB()
+    request.addfinalizer(lambda: releaseDB())
+
+
+def with_request_context():
+    """Run the test inside of a request context.
+
+    This combines flask's request context with our own setup. It is intended
+    to be used via pytests' `yield_fixture`, but like the other fixtures in
+    this module, must be declared as such in the test module itself.
+    """
+    with app.test_request_context():
+        init_auth()
+        yield
 
 
 class ModelTest:
@@ -162,8 +174,8 @@ class ModelTest:
     def test_repr(self):
         print(self.sample_obj())
 
-    def test_insert(self, db):
-        db.add(self.sample_obj())
+    def test_insert(self):
+        db.session.add(self.sample_obj())
 
 
 class NetworkTest:
@@ -203,12 +215,12 @@ class NetworkTest:
                 ports.append(nic.port)
         return ports
 
-    def collect_nodes(self, db):
+    def collect_nodes(self):
         """Add 4 available nodes with nics to the project.
 
         If there are not enough nodes, this will rais an api.AllocationError.
         """
-        free_nodes = db.query(Node).filter_by(project_id=None).all()
+        free_nodes = Node.query.filter_by(project_id=None).all()
         nodes = []
         for node in free_nodes:
             if len(node.nics) > 0:
@@ -261,8 +273,7 @@ def headnode_cleanup(request):
     """
 
     def undefine_headnodes():
-        db = Session()
-        for hn in db.query(Headnode):
+        for hn in Headnode.query:
             # XXX: Our current version of libvirt has a bug that causes this
             # command to hang for a minute and throw an error before
             # completing successfully.  For this reason, we are ignoring any
@@ -276,37 +287,174 @@ def headnode_cleanup(request):
     request.addfinalizer(undefine_headnodes)
 
 
-def wsgi_mkenv(method, path, data=None):
-    """Helper routine to build a wsgi environment.
+def initial_db():
+    """Populates the database with a useful set of objects.
 
-    We need this to generate mock requests.
+    This allows us to avoid some boilerplate in tests which need a few objects
+    in the database in order to work.
+
+    Note that this fixture requires the use of the following extensions:
+
+        - haas.ext.switches.mock
+        - haas.ext.obm.mock
     """
-    env = {
-        'REQUEST_METHOD': method,
-        'SCRIPT_NAME': '',
-        'PATH_INFO': path,
-        'SERVER_NAME': 'haas.test-env',
-        'SERVER_PORT': '5000',
-        'wsgi.version': (1, 0),
-        'wsgi.url_scheme': 'http',
-        'wsgi.errors': sys.stderr,
-        'wsgi.multithreaded': False,
-        'wsgi.multiprocess': False,
-        'wsgi.run_once': False,
-    }
-    if data is None:
-        env['wsgi.input'] = StringIO()
-    else:
-        env['wsgi.input'] = StringIO(data)
-    return env
+    for required_extension in 'haas.ext.switches.mock', 'haas.ext.obm.mock':
+        assert required_extension in sys.modules, \
+            "The 'initial_db' fixture requires the extension %r" % \
+            required_extension
+
+    from haas.ext.switches.mock import MockSwitch
+    from haas.ext.obm.mock import MockObm
+
+    with app.app_context():
+        # Create a couple projects:
+        runway = Project("runway")
+        manhattan = Project("manhattan")
+        for proj in [runway, manhattan]:
+            db.session.add(proj)
+
+        # ...including at least one with nothing in it:
+        db.session.add(Project('empty-project'))
+
+        # ...A variety of networks:
+
+        networks = [
+            {
+                'creator': None,
+                'access': [],
+                'allocated': True,
+                'label': 'stock_int_pub',
+            },
+            {
+                'creator': None,
+                'access': [],
+                'allocated': False,
+                'network_id': 'ext_pub_chan',
+                'label': 'stock_ext_pub',
+            },
+            {
+                # For some tests, we want things to initialyl be attached to a
+                # network. This one serves that purpose; using the others would
+                # interfere with some of the network_delete tests.
+                'creator': None,
+                'access': [],
+                'allocated': True,
+                'label': 'pub_default',
+            },
+            {
+                'creator': runway,
+                'access': [runway],
+                'allocated': True,
+                'label': 'runway_pxe'
+            },
+            {
+                'creator': None,
+                'access': [runway],
+                'allocated': False,
+                'network_id': 'runway_provider_chan',
+                'label': 'runway_provider',
+            },
+            {
+                'creator': manhattan,
+                'access': [manhattan],
+                'allocated': True,
+                'label': 'manhattan_pxe'
+            },
+            {
+                'creator': None,
+                'access': [manhattan],
+                'allocated': False,
+                'network_id': 'manhattan_provider_chan',
+                'label': 'manhattan_provider',
+            },
+            {
+                'creator': None,
+                'access': [manhattan, runway],
+                'allocated': False,
+                'network_id': 'manhattan_runway_provider_chan',
+                'label': 'manhattan_runway_provider',
+            },
+            {
+                'creator': manhattan,
+                'access': [manhattan, runway],
+                'allocated': True,
+                'label': 'manhattan_runway_pxe',
+            },
+        ]
+
+        for net in networks:
+            if net['allocated']:
+                net['network_id'] = \
+                    get_network_allocator().get_new_network_id()
+            db.session.add(Network(**net))
+
+        # ... Two switches. One of these is just empty, for testing deletion:
+        db.session.add(MockSwitch(label='empty-switch',
+                                  hostname='empty',
+                                  username='alice',
+                                  password='secret',
+                                  type=MockSwitch.api_name))
+
+        # ... The other we'll actually attach stuff to for other tests:
+        switch = MockSwitch(label="stock_switch_0",
+                            hostname='stock',
+                            username='bob',
+                            password='password',
+                            type=MockSwitch.api_name)
+
+        # ... Some free ports:
+        db.session.add(Port('free_port_0', switch))
+        db.session.add(Port('free_port_1', switch))
+
+        # ... Some nodes (with projets):
+        nodes = [
+            {'label': 'runway_node_0', 'project': runway},
+            {'label': 'runway_node_1', 'project': runway},
+            {'label': 'manhattan_node_0', 'project': manhattan},
+            {'label': 'manhattan_node_1', 'project': manhattan},
+            {'label': 'free_node_0', 'project': None},
+            {'label': 'free_node_1', 'project': None},
+        ]
+        for node_dict in nodes:
+            obm=MockObm(type=MockObm.api_name,
+                        host=node_dict['label'],
+                        user='user',
+                        password='password')
+            node = Node(label=node_dict['label'], obm=obm)
+            node.project = node_dict['project']
+            db.session.add(Nic(node, label='boot-nic', mac_addr='Unknown'))
+
+            # give it a nic that's attached to a port:
+            port_nic = Nic(node, label='nic-with-port', mac_addr='Unknown')
+            port = Port(node_dict['label'] + '_port', switch)
+            port.nic = port_nic
+
+        # ... Some headnodes:
+        headnodes = [
+            {'label': 'runway_headnode_on', 'project': runway, 'on': True},
+            {'label': 'runway_headnode_off', 'project': runway, 'on': False},
+            {'label': 'runway_manhattan_on', 'project': manhattan, 'on': True},
+            {'label': 'runway_manhattan_off', 'project': manhattan, 'on': False},
+        ]
+        for hn_dict in headnodes:
+            headnode = Headnode(hn_dict['project'],
+                                    hn_dict['label'],
+                                    'base-headnode')
+            headnode.dirty = not hn_dict['on']
+            hnic = Hnic(headnode, 'pxe')
+            db.session.add(hnic)
+
+            # Connect them to a network, so we can test detaching.
+            hnic = Hnic(headnode, 'public')
+            hnic.network = Network.query \
+                .filter_by(label='pub_default').one()
 
 
-def do_request(method, path, data=None):
-    """Submit a fake HTTP api call.
+        # ... and at least one node with no nics (useful for testing delete):
+        obm=MockObm(type=MockObm.api_name,
+            host='hostname',
+            user='user',
+            password='password')
+        db.session.add(Node(label='no_nic_node', obm=obm))
 
-    This invokes the request handler with an HTTP request corresponding to
-    the given arguments.
-    """
-    response = rest.request_handler(Request(wsgi_mkenv(method, path, data)))
-    rest.local_manager.cleanup()
-    return response
+        db.session.commit()

@@ -16,7 +16,7 @@
 internal setup only and will most likely not work on
 other HaaS configurations."""
 
-from haas import api, model, deferred, server, rest
+from haas import api, model, deferred, server
 from haas.test_common import *
 import pytest
 
@@ -27,9 +27,7 @@ def configure():
     config.load_extensions()
 
 
-@pytest.fixture
-def db(request):
-    return fresh_database(request)
+fresh_database = pytest.fixture(fresh_database)
 
 
 @pytest.fixture
@@ -38,24 +36,20 @@ def server_init():
     server.validate_state()
 
 
-@pytest.yield_fixture
-def with_request_context():
-    with rest.RequestContext():
-        yield
-
+with_request_context = pytest.yield_fixture(with_request_context)
 
 site_layout = pytest.fixture(site_layout)
 
 pytestmark = pytest.mark.usefixtures('configure',
                                      'server_init',
-                                     'db',
+                                     'fresh_database',
                                      'with_request_context',
                                      'site_layout')
 
 
 class TestNetworkVlan(NetworkTest):
 
-    def test_isolated_networks(self, db):
+    def test_isolated_networks(self):
 
         def get_legal_channels(network):
             response_body = api.show_network(network)
@@ -63,7 +57,7 @@ class TestNetworkVlan(NetworkTest):
             return response_body['channels']
 
         def create_networks():
-            nodes = self.collect_nodes(db)
+            nodes = self.collect_nodes()
 
             # Create two networks
             network_create_simple('net-0', 'anvil-nextgen')
@@ -128,15 +122,26 @@ class TestNetworkVlan(NetworkTest):
             nodes = project.nodes
             ports = self.get_all_ports(nodes)
 
-            # Remove all nodes from their networks
+            # Remove all nodes from their networks. We first build up a list of
+            # the arguments to the API calls, which has no direct references to
+            # database objects, and then make the API calls and invoke
+            # deferred.apply_networking after. This is important --
+            # The API calls and apply_networking normally run in their own
+            # transaction. We get away with not doing this in the tests because
+            # we serialize everything ourselves, so there's no risk of
+            # interference. If we were to hang on to references to database
+            # objects across such calls however, things could get harry.
+            all_attachments = []
             for node in nodes:
-                attachments = db.query(model.NetworkAttachment)\
+                attachments = model.NetworkAttachment.query \
                     .filter_by(nic=node.nics[0]).all()
                 for attachment in attachments:
-                    api.node_detach_network(node.label,
+                    all_attachments.append((node.label,
                                             node.nics[0].label,
-                                            attachment.network.label)
-                    deferred.apply_networking()
+                                            attachment.network.label))
+            for attachment in all_attachments:
+                api.node_detach_network(*attachment)
+                deferred.apply_networking()
 
             # Assert that none of the nodes are on any network
             port_networks = self.get_port_networks(ports)
