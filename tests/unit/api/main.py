@@ -1896,7 +1896,7 @@ class Test_show_network:
         assert result == {
             'name': 'public-network',
             'creator': 'admin',
-            'access': None
+            'access': None,
             'channels': ['null'],
         }
 
