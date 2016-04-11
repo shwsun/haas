@@ -211,14 +211,14 @@ def user_remove_project(user, project):
     do_post(url, data={'project': project})
 
 @cmd
-def project_add_network(project, network):
+def project_grant_network_access(project, network):
    """Add <network> to <project>"""
    url = object_url('project', project, 'add_network')
    do_post(url, data={'network': network})
 
 
 @cmd
-def project_remove_network(project, network):
+def project_revoke_network_access(project, network):
    """Remove <network> from <project>"""
    url = object_url('project', project, 'remove_network')
    do_post(url, data={'network': network})

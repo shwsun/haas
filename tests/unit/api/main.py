@@ -135,22 +135,22 @@ class TestProjectCreateDelete:
 class TestProjectAddDeleteNetwork:
      """Tests for adding and deleting a network from a project"""
      
-     def test_project_add_network(self):
+     def test_project_grant_network_access(self):
          api.project_create('acme-corp')
          api.project_create('anvil-nextgen')
          network_create_simple('hammernet', 'acme-corp')
-         api.project_add_network('anvil-nextgen', 'hammernet')
+         api.project_grant_network_access('anvil-nextgen', 'hammernet')
          network = api._must_find(model.Network, 'hammernet')
          project = api._must_find(model.Project, 'anvil-nextgen')
          assert project in network.access
          assert network in project.networks_access
          
-     def test_project_remove_network(self):
+     def test_project_revoke_network_access(self):
          api.project_create('acme-corp')
          api.project_create('anvil-nextgen')
          network_create_simple('hammernet', 'acme-corp')
-         api.project_add_network('anvil-nextgen', 'hammernet')
-         api.project_remove_network('anvil-nextgen', 'hammernet')
+         api.project_grant_network_access('anvil-nextgen', 'hammernet')
+         api.project_revoke_network_access('anvil-nextgen', 'hammernet')
          network = api._must_find(model.Network, 'hammernet')
          project = api._must_find(model.Project, 'anvil-nextgen')
          assert project not in network.access
@@ -160,7 +160,7 @@ class TestProjectAddDeleteNetwork:
          api.project_create('acme-corp')
          network_create_simple('hammernet', 'acme-corp')
          with pytest.raises(api.BlockedError):
-             api.project_remove_network('acme-corp', 'hammernet')
+             api.project_revoke_network_access('acme-corp', 'hammernet')
 
 class TestNetworking:
 
@@ -1535,7 +1535,7 @@ class TestQuery:
         api.node_register_nic('node-100', '100-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-oldtimer')
         api.project_connect_node('anvil-oldtimer', 'node-100')
-        api.project_add_network('anvil-oldtimer', 'hammernet')
+        api.project_grant_network_access('anvil-oldtimer', 'hammernet')
         api.node_connect_network('node-100', '100-eth0', 'hammernet')
         deferred.apply_networking()
 
@@ -1576,7 +1576,7 @@ class TestQuery:
         api.node_register_nic('node-100', '100-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-oldtimer')
         api.project_connect_node('anvil-oldtimer', 'node-100')
-        api.project_add_network('anvil-oldtimer', 'hammernet')
+        api.project_grant_network_access('anvil-oldtimer', 'hammernet')
         api.node_connect_network('node-100', '100-eth0', 'hammernet')
         deferred.apply_networking()
         

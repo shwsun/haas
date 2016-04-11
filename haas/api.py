@@ -133,8 +133,8 @@ def project_detach_node(project, node):
     project.nodes.remove(node)
     db.session.commit()
 
-@rest_call('POST', '/project/<project>/add_network')
-def project_add_network(project, network):
+@rest_call('POST', '/project/<project>/grant_network_access')
+def project_grant_network_access(project, network):
    """Add access to <network> to <project>.
    If the project or network does not exist, a NotFoundError will be raised.
    """
@@ -150,9 +150,9 @@ def project_add_network(project, network):
    network.access.append(project)
    db.session.commit()
 
-@rest_call('POST', '/project/<project>/remove_network')
-def project_remove_network(project, network):
-   """Remove a network from a project.
+@rest_call('POST', '/project/<project>/revoke_network_access')
+def project_revoke_network_access(project, network):
+   """Remove access to <network> from <project>.
    If the project or network does not exist, a NotFoundError will be raised.
    If the project is the owner of the network a BlockedError will be raised.
    """
