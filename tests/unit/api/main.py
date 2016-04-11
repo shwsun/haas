@@ -1882,7 +1882,7 @@ class Test_show_network:
         assert result == {
             'name': 'spiderwebs',
             'creator': 'anvil-nextgen',
-            'access': 'anvil-nextgen',
+            'access': ['anvil-nextgen'],
             "channels": ["null"]
         }
 
@@ -1896,6 +1896,7 @@ class Test_show_network:
         assert result == {
             'name': 'public-network',
             'creator': 'admin',
+            'access': None
             'channels': ['null'],
         }
 
@@ -1910,7 +1911,7 @@ class Test_show_network:
         assert result == {
             'name': 'spiderwebs',
             'creator': 'admin',
-            'access': 'anvil-nextgen',
+            'access': ['anvil-nextgen'],
             'channels': ['null'],
         }
 

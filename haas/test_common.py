@@ -368,18 +368,18 @@ def initial_db():
                 'label': 'manhattan_provider',
             },
             {
-+            'creator': None,
-+            'access': [manhattan, runway],
-+            'allocated': False,
-+            'network_id': 'manhattan_runway_provider_chan',
-+            'label': 'manhattan_runway_provider',
-+        },
-+        {
-+            'creator': manhattan,
-+            'access': [manhattan, runway],
-+            'allocated': True,
-+            'label': 'manhattan_runway_pxe',
-+        },
+                'creator': None,
+                'access': [manhattan, runway],
+                'allocated': False,
+                'network_id': 'manhattan_runway_provider_chan',
+                'label': 'manhattan_runway_provider',
+            },
+            {
+                'creator': manhattan,
+                'access': [manhattan, runway],
+                'allocated': True,
+                'label': 'manhattan_runway_pxe',
+            },
         ]
 
         for net in networks:

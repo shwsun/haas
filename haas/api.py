@@ -148,7 +148,7 @@ def project_add_network(project, network):
                             (network.label, project.label))
 
    network.access.append(project)
-   local.db.commit()
+   db.session.commit()
 
 @rest_call('POST', '/project/<project>/remove_network')
 def project_remove_network(project, network):
@@ -177,7 +177,7 @@ def project_remove_network(project, network):
                        (project.label, network.label))
 
    network.access.remove(project)
-   local.db.commit()
+   db.session.commit()
                             # Node Code #
                             #############
 
@@ -559,8 +559,7 @@ def list_networks():
     """
     get_auth_backend().require_admin()
 
-    db = local.db
-    networks = db.query(model.Network).all()
+    networks = db.session.query(model.Network).all()
     result = {}
     for n in networks:
         if n.access:
