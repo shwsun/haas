@@ -13,20 +13,65 @@
 # governing permissions and limitations under the License.
 
 from setuptools import setup, find_packages
+from os.path import dirname, join
+readme_file = 'README.rst'
+
+def _get_readme():
+    with open(join(dirname(__file__), readme_file)) as f:
+        return f.read()
 
 setup(name='haas',
       version='0.2rc2',
+      maintainer='Developers of the HaaS Project at MOC',
+      maintainer_email='haas-dev-list@bu.edu',
       url='https://github.com/CCI-MOC/haas',
+      description='A bare-metal isolation service that automates allocation and management ' \
+                  'of non-virtualized compute resources across mutually untrusting ' \
+                  'and incompatible provisioning systems.',
+      long_description=_get_readme(),
+      license='Apache 2.0',
+      classifiers=['Development Status :: 4 - Beta',
+                   'Intended Audience :: Developers',
+                   'Intended Audience :: System Administrators', 
+                   'Intended Audience :: Science/Research', 
+                   'Topic :: System :: Cloud :: Installation/Setup',
+                   'Topic :: System :: Systems Administration :: Clustering :: Utilities ',
+                   'License :: OSI Approved :: Apache Software License, version 2.0',
+                   'Environment :: Console',
+                   'Environment :: Web Environment',
+                   'Operating System :: POSIX :: Linux',
+                   'Programming Language :: Python',
+                  ],
+      keywords='cloud bare-metal setuptools data-center isolation',
+
       packages=find_packages(),
+      # TODO: we should merge scripts into entry_points, below.
       scripts=['scripts/haas', 'scripts/create_bridges'],
-      install_requires=['SQLAlchemy==0.9.7',
-                        'Werkzeug==0.9.4',
+      entry_points={
+          'console_scripts': ['haas-admin=haas.commands.admin:main'],
+      },
+      package_data={
+          'haas': [
+              'migrations/env.py',
+              'migrations/alembic.ini',
+              'migrations/script.py.mako',
+              'migrations/versions/*.py',
+          ],
+          'haas.ext.obm': ['migrations/*/*.py'],
+          'haas.ext.switches': ['migrations/*/*.py'],
+      },
+      zip_safe=False,  # migrations folder needs to be extracted to work.
+      install_requires=['Flask-SQLAlchemy>=2.1,<3.0',
+                        'Flask-Migrate>=1.8,<2.0',
+                        'Flask-Script>=2.0.5,<3.0',
+                        'Werkzeug>=0.9.4,<0.10',
+                        'Flask>=0.10.1,<0.11',
                         'schema==0.3.1',
                         'importlib==1.0.3',
                         'passlib==1.6.2',
                         'pexpect==3.3',
                         'requests==2.4.1',
-                        'pytest==2.6.2',
+                        'pytest>=2.6.2,<3.0',
                         'pytest-cov==1.8.0',
                         'pytest-xdist',
                         ])

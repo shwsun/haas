@@ -49,6 +49,12 @@ The HaaS software itself can then be installed by running::
     cd haas
     sudo python setup.py install
 
+To create the database tables, first make sure ``haas.cfg`` is set up the way
+you need, including any extensions you plan to use, then (from the directory
+containing ``haas.cfg``) exectue::
+
+    haas-admin db create
+
 Disable SELinux
 ---------------
 
@@ -246,17 +252,6 @@ Users may find the scripts in ``examples/puppet_headnode`` useful for
 configuring the ubuntu headnode to act as a PXE server; see the README in
 that directory for more information.
 
-Database
-------------
-
-HaaS currently supports SQLite for maintaining state. Because SQLAlchemy is
-used as a database access layer, other DBs can and should be easily supported
-in future releases. The database must be readable and writable by the HaaS
-user.  Running the following command as ``haas_user`` will create it (in the
-location specified in ``haas.cfg``) and initialize its tables::
-
-  haas init_db
-
 
 Authentication and Authorization
 --------------------------------
@@ -307,6 +302,7 @@ former is a WSGI application, which we recommend running with Apache's
   <VirtualHost 127.0.0.1:80>
     ServerName 127.0.0.1
     AllowEncodedSlashes On
+    WSGIPassAuthorization On
     WSGIDaemonProcess haas_user user=haas_user group=haas_user threads=2
     WSGIScriptAlias / /var/www/haas/haas.wsgi
     <Directory /var/www/haas>
@@ -325,6 +321,13 @@ strings that should be escaped (see `issue 361 <https://github.com/CCI-MOC/haas/
 allow <https://stackoverflow.com/questions/4390436/need-to-allow-encoded-slashes-on-apache>`_
 this due to security concerns. ``AllowEncodedSlashes On`` enables the passing
 of these arguments.
+
+**Note:** For apache to be able to pass the authentication headers to HaaS 
+following directive will have to be turned on
+
+``WSGIPassAuthorization On``
+
+(see http://stackoverflow.com/questions/20940651/how-to-access-apache-basic-authentication-user-in-flask )
 
 If you haven't already, create the directory that will contain the HaaS WSGI module::
 
@@ -353,7 +356,7 @@ Name of the script is: haas_network.service
 Centos:
 -------
 
-Centos uses systemd to controll all its processes. 
+Centos uses systemd to controll all its processes.
 
 Place the file haas_network.service under:
 ``/usr/lib/systemd/system/``
