@@ -36,11 +36,6 @@ import xml.etree.ElementTree
 import logging
 import os
 
-# A joining table for networks and projects, which have a many to many relationship:
-network_projects = Table('network_projects', Base.metadata,
-                    Column('project_id', ForeignKey('project.id')),
-                    Column('network_id', ForeignKey('network.id')))
-
 db = SQLAlchemy(app)
 
 # without setting this explicitly, we get a warning that this option
@@ -63,7 +58,10 @@ def init_db(uri=None):
         uri = cfg.get('database', 'uri')
     app.config.update(SQLALCHEMY_DATABASE_URI=uri)
 
-
+# A joining table for networks and projects, which have a many to many relationship:
+network_projects = db.Table('network_projects',
+                    db.Column('project_id', db.ForeignKey('project.id')),
+                    db.Column('network_id', db.ForeignKey('network.id')))
 
 class Nic(db.Model):
     """a nic belonging to a Node"""
