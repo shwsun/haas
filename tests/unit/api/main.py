@@ -135,7 +135,7 @@ class TestProjectCreateDelete:
 class TestProjectAddDeleteNetwork:
      """Tests for adding and deleting a network from a project"""
      
-     def test_project_add_network(self, db):
+     def test_project_add_network(self):
          api.project_create('acme-corp')
          api.project_create('anvil-nextgen')
          network_create_simple('hammernet', 'acme-corp')
@@ -145,7 +145,7 @@ class TestProjectAddDeleteNetwork:
          assert project in network.access
          assert network in project.networks_access
          
-     def test_project_remove_network(self, db):
+     def test_project_remove_network(self):
          api.project_create('acme-corp')
          api.project_create('anvil-nextgen')
          network_create_simple('hammernet', 'acme-corp')
@@ -156,7 +156,7 @@ class TestProjectAddDeleteNetwork:
          assert project not in network.access
          assert network not in project.networks_access
 
-     def test_project_remove_network_creator(self, db):
+     def test_project_remove_network_creator(self):
          api.project_create('acme-corp')
          network_create_simple('hammernet', 'acme-corp')
          with pytest.raises(api.BlockedError):
@@ -1934,7 +1934,7 @@ class TestFancyNetworkCreate:
         project = api._must_find(model.Project, 'anvil-nextgen')
         network = api._must_find(model.Network, 'hammernet')
         assert network.creator is project
-        assert network.access is project
+        assert project in network.access
         assert network.allocated is True
 
     def test_project_network_imported_fails(self):
@@ -1962,7 +1962,10 @@ class TestFancyNetworkCreate:
                 api.network_create(network, 'admin', project_api, net_id)
                 network = api._must_find(model.Network, network)
                 assert network.creator is None
-                assert network.access is project_db
+                if project_db is None:
+                    assert not network.access
+                else:
+                    assert project_db in network.access
                 assert network.allocated is allocated
             network = api._must_find(model.Network, 'hammernet' + project_api + '35')
             assert network.network_id == '35'
