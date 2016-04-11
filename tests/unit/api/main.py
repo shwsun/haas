@@ -1916,7 +1916,7 @@ class Test_show_network:
 
 class TestShowSwitchPort:
 
-    def test_show_port_with_attachment(self, db):
+    def test_show_port_with_attachment(self):
         api.switch_register('sw0', type=MOCK_SWITCH_TYPE, 
 		username="switch_user", password="switch_pass", hostname="switchname")
         api.switch_register_port('sw0', '3')
@@ -1945,7 +1945,7 @@ class TestShowSwitchPort:
                            }
         }
 
-    def test_show_port_no_attachment(self, db):
+    def test_show_port_no_attachment(self):
         api.switch_register('sw0', type=MOCK_SWITCH_TYPE, 
 		username="switch_user", password="switch_pass", hostname="switchname")
         api.switch_register_port('sw0', '3')
@@ -1967,7 +1967,86 @@ class TestShowSwitchPort:
         }
 
 class TestRevertPort:
-    def test_revert_port_no_changes(self, db):
+    def test_revert_port_no_changes(self):
+        api.switch_register('sw0', type=MOCK_SWITCH_TYPE, 
+		username="switch_user", password="switch_pass", hostname="switchname")
+        api.switch_register_port('sw0', '3')
+        port = api._must_find(model.Port, '3')
+        api.node_register('compute-01', obm={
+		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+		  "host": "ipmihost", 
+		  "user": "root", 
+		  "password": "tapeworm"})
+        api.node_register_nic('compute-01', 'eth0', 'DE:AD:BE:EF:20:14')
+        api.port_connect_nic('sw0', '3', 'compute-01', 'eth0')
+        
+        api.project_create('anvil-nextgen')
+        api.project_connect_node('anvil-nextgen', 'compute-01')
+        network_create_simple('hammernet', 'anvil-nextgen')
+        api.node_connect_network('compute-01', 'eth0', 'hammernet')
+        deferred.apply_networking()
+        before_switch = port.owner.get_port_networks([port])
+        before_haas = json.loads(api.show_port('3'))
+        api.revert_port('3')
+        deferred.apply_networking()
+        after_haas = json.loads(api.show_port('3'))
+        after_switch = port.owner.get_port_networks([port])
+        assert before_haas == after_haas and before_switch == after_switch
+
+class TestShowSwitchPort:
+
+    def test_show_port_with_attachment(self):
+        api.switch_register('sw0', type=MOCK_SWITCH_TYPE, 
+		username="switch_user", password="switch_pass", hostname="switchname")
+        api.switch_register_port('sw0', '3')
+        api.node_register('compute-01', obm={
+		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+		  "host": "ipmihost", 
+		  "user": "root", 
+		  "password": "tapeworm"})
+        api.node_register_nic('compute-01', 'eth0', 'DE:AD:BE:EF:20:14')
+        api.port_connect_nic('sw0', '3', 'compute-01', 'eth0')
+        
+        api.project_create('anvil-nextgen')
+        api.project_connect_node('anvil-nextgen', 'compute-01')
+        network_create_simple('hammernet', 'anvil-nextgen')
+        api.node_connect_network('compute-01', 'eth0', 'hammernet')
+        deferred.apply_networking()
+
+        result = json.loads(api.show_port('3'))
+        assert result == {
+            'name': '3',
+            'switch': 'sw0',
+            'nic': 'eth0',
+            'node': 'compute-01',
+            'attachment': {'network': 'hammernet',
+                           'channel': 'null',
+                           }
+        }
+
+    def test_show_port_no_attachment(self):
+        api.switch_register('sw0', type=MOCK_SWITCH_TYPE, 
+		username="switch_user", password="switch_pass", hostname="switchname")
+        api.switch_register_port('sw0', '3')
+        api.node_register('compute-01', obm={
+		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+		  "host": "ipmihost", 
+		  "user": "root", 
+		  "password": "tapeworm"})
+        api.node_register_nic('compute-01', 'eth0', 'DE:AD:BE:EF:20:14')
+        api.port_connect_nic('sw0', '3', 'compute-01', 'eth0')
+        
+        result = json.loads(api.show_port('3'))
+        assert result == {
+            'name': '3',
+            'switch': 'sw0',
+            'nic': 'eth0',
+            'node': 'compute-01',
+            'attachment': None,
+        }
+
+class TestRevertPort:
+    def test_revert_port_no_changes(self):
         api.switch_register('sw0', type=MOCK_SWITCH_TYPE, 
 		username="switch_user", password="switch_pass", hostname="switchname")
         api.switch_register_port('sw0', '3')
