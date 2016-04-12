@@ -152,32 +152,41 @@ def project_grant_network_access(project, network):
 
 @rest_call('POST', '/project/<project>/revoke_network_access')
 def project_revoke_network_access(project, network):
-   """Remove access to <network> from <project>.
-   If the project or network does not exist, a NotFoundError will be raised.
-   If the project is the owner of the network a BlockedError will be raised.
-   """
-   network = _must_find(model.Network, network)
-   project = _must_find(model.Project, project)
-   #must be admin, the owner of the network, or <project> to remove <project>.
-   authorized = get_auth_backend().have_project_access(network.owner)
-
-   if network.access:
-       for proj in network.access:
-           authorized = authorized or ((proj.label == project.label) and get_auth_backend().have_project_access(proj))
-           
-   if not authorized:
+    """Remove access to <network> from <project>.
+    If the project or network does not exist, a NotFoundError will be raised.
+    If the project is the owner of the network a BlockedError will be raised.
+    """
+    network = _must_find(model.Network, network)
+    project = _must_find(model.Project, project)
+    #must be admin, the owner of the network, or <project> to remove <project>.
+    authorized = get_auth_backend().have_project_access(network.owner)
+    
+    if network.access:
+        for proj in network.access:
+            authorized = authorized or ((proj.label == project.label) and get_auth_backend().have_project_access(proj))
+            
+    if not authorized:
         raise AuthorizationError("You do not have access to this project.")
    
-   if project not in network.access:
-       raise NotFoundError("Network %s is not in project %s"%
-                           (network.label, project.label))
+    if project not in network.access:
+        raise NotFoundError("Network %s is not in project %s"%
+                            (network.label, project.label))
 
-   if project is network.owner:
-    raise BlockedError("Project %s is owner of network %s and its access cannot be removed"%
-                       (project.label, network.label))
+    if project is network.owner:
+        raise BlockedError("Project %s is owner of network %s and its access cannot be removed"%
+                           (project.label, network.label))
 
-   network.access.remove(project)
-   db.session.commit()
+    num_attachments = 0
+    for attachment in network.attachments:
+        if attachment.nic.owner.project.label == project.label:
+            num_attachments += 1
+
+    if num_attachments != 0:
+        raise BlockedError("Project still has nodes attached to the network")
+
+    network.access.remove(project)
+    db.session.commit()
+                       
                             # Node Code #
                             #############
 

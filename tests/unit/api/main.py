@@ -133,34 +133,53 @@ class TestProjectCreateDelete:
             api.project_create('acme-corp')
 
 class TestProjectAddDeleteNetwork:
-     """Tests for adding and deleting a network from a project"""
+    """Tests for adding and deleting a network from a project"""
      
-     def test_project_grant_network_access(self):
-         api.project_create('acme-corp')
-         api.project_create('anvil-nextgen')
-         network_create_simple('hammernet', 'acme-corp')
-         api.project_grant_network_access('anvil-nextgen', 'hammernet')
-         network = api._must_find(model.Network, 'hammernet')
-         project = api._must_find(model.Project, 'anvil-nextgen')
-         assert project in network.access
-         assert network in project.networks_access
+    def test_project_grant_network_access(self):
+        api.project_create('acme-corp')
+        api.project_create('anvil-nextgen')
+        network_create_simple('hammernet', 'acme-corp')
+        api.project_grant_network_access('anvil-nextgen', 'hammernet')
+        network = api._must_find(model.Network, 'hammernet')
+        project = api._must_find(model.Project, 'anvil-nextgen')
+        assert project in network.access
+        assert network in project.networks_access
          
-     def test_project_revoke_network_access(self):
-         api.project_create('acme-corp')
-         api.project_create('anvil-nextgen')
-         network_create_simple('hammernet', 'acme-corp')
-         api.project_grant_network_access('anvil-nextgen', 'hammernet')
-         api.project_revoke_network_access('anvil-nextgen', 'hammernet')
-         network = api._must_find(model.Network, 'hammernet')
-         project = api._must_find(model.Project, 'anvil-nextgen')
-         assert project not in network.access
-         assert network not in project.networks_access
+    def test_project_revoke_network_access(self):
+        api.project_create('acme-corp')
+        api.project_create('anvil-nextgen')
+        network_create_simple('hammernet', 'acme-corp')
+        api.project_grant_network_access('anvil-nextgen', 'hammernet')
+        api.project_revoke_network_access('anvil-nextgen', 'hammernet')
+        network = api._must_find(model.Network, 'hammernet')
+        project = api._must_find(model.Project, 'anvil-nextgen')
+        assert project not in network.access
+        assert network not in project.networks_access
 
-     def test_project_remove_network_owner(self):
-         api.project_create('acme-corp')
-         network_create_simple('hammernet', 'acme-corp')
-         with pytest.raises(api.BlockedError):
-             api.project_revoke_network_access('acme-corp', 'hammernet')
+    def test_project_revoke_network_access_connected_node(self):
+        api.project_create('acme-corp')
+        api.project_create('anvil-nextgen')
+        network_create_simple('hammernet', 'acme-corp')
+        api.project_grant_network_access('anvil-nextgen', 'hammernet')
+        api.node_register('node-99', obm={
+             "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+             "host": "ipmihost",
+             "user": "root",
+             "password": "tapeworm"})
+
+        api.project_connect_node('anvil-nextgen', 'node-99')
+        api.node_register_nic('node-99', 'eth0', 'DE:AD:BE:EF:20:14')
+        api.node_connect_network('node-99', 'eth0', 'hammernet')
+        deferred.apply_networking()
+       
+        with pytest.raises(api.BlockedError):
+            api.project_revoke_network_access('anvil-nextgen', 'hammernet')
+
+    def test_project_remove_network_owner(self):
+        api.project_create('acme-corp')
+        network_create_simple('hammernet', 'acme-corp')
+        with pytest.raises(api.BlockedError):
+            api.project_revoke_network_access('acme-corp', 'hammernet')
 
 class TestNetworking:
 
