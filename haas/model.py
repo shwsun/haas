@@ -278,7 +278,7 @@ class Obm(db.Model):
         Exact implementation is left to the subclasses.
         """
         assert False, "Subclasses MUST override the power_cycle method "
-    
+
     def power_off(self):
         """ Shuts off the node.
 

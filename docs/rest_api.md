@@ -135,13 +135,9 @@ The result must contain the following fields:
 * "channels", description of legal channel identifiers for this network.
   This is a list of channel identifiers, with possible wildcards. The
   format of these is driver specific, see below.
-* "creator", the name of the project which created the network, or
+* "owner", the name of the project which created the network, or
   "admin", if it was created by an administrator.
-
-The result may also contain the following fields:
-
-* "access" -- if this is present, it is the name of the project which
-  has access to the network. Otherwise, the network is public.
+* "access", a list of projects that have access to the network or 'None' if the network is public
 
 Response body (on success):
 
@@ -149,13 +145,13 @@ Response body (on success):
         "name": <network>,
         "channels": <chanel-id-list>,
         "creator": <project or "admin">,
-        "access": <project with access to the network> (Optional)
+        "access": <project(s) with access to the network/None>
     }
 
 Authorization requirements:
 
 * If the network is public, no special access is required.
-* Otherwise, access to the project specified by `"access"` is required.
+* Otherwise, access to the a project in the "access" list is required.
 
 #### Channel Formats
 
@@ -172,6 +168,92 @@ Additionally, the `show_networks` api call may return the channel identifier
 
 Where documentation specifies that the network driver should choose a
 default channel, the VLAN drivers choose `vlan/native`.
+
+### list_networks
+
+`GET /networks`
+
+List all networks.
+
+Returns a JSON dictionary of dictionaries, indexed by the name of the network with interior dictionaries indexed by project and channel.
+
+The response must contain the following fields:
+
+* "network", the name of a network
+* "driver_id", the id of the network
+* "projects", a list of projects with access to the network or 'None' if network is public 
+
+Example Response:  
+	{
+		"netA": {
+			"driver_id": "101", 
+			"projects": ["qproj-01", qproj-02"]
+			},
+		"netB": {
+			"driver_id": "102", 
+			"projects": None}
+	}
+
+Authorization requirements:
+
+Only admins can list the networks.
+
+### list_network_attachments
+
+`GET /network/<network>/attachments`
+
+List all nodes that are attached to network <network>.
+    
+If optional argument 'project' is supplied will only list attached nodes belonging to the specified project.
+
+Returns a JSON dictionary of dictionaries with first level key being the name of the attached node and second level keys being:
+
+* "nic", the name of the nic on which the node is attached
+* "channel", the channel on which the attachment exists
+* "project", the name of the project which owns the attached node
+
+Example Response:  
+	{
+		"node1": {
+			 "nic": "nic1", 
+			 "channel" "vlan/native",
+			 "project": "projectA"
+			 }, 
+		"node2": {
+			 "nic": "nic2",
+			 "channel": "vlan/235",
+			 "project": "projectB"
+			 }
+	}
+
+Authorization requirements:
+
+Admins or the project that is the owner can list all attached nodes. Other projects can only list their own nodes.
+
+### network_grant_project_access
+
+`PUT /network/<network>/access/<project>`
+
+Add <project> to access list for <network>.
+
+If the network or project does not exist a NotFoundError will be raised.
+
+Authorization requirements:
+
+Only admins or the network owner can grant a project access to the network.
+
+### network_revoke_project_access
+
+`DELETE /network/<network>/access/<project>`
+
+Remove <project> from access list for <network>.
+
+If the network or project does not exist a NotFoundError will be raised.
+If the project is the owner of the network a BlockedError will be raised.
+
+Authorization requirements:
+
+Only admins, the network owner, or the project itself can revoke a project's access to the network.
 
 ### node_connect_network
 

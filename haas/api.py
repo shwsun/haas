@@ -133,8 +133,8 @@ def project_detach_node(project, node):
     project.nodes.remove(node)
     db.session.commit()
 
-@rest_call('POST', '/project/<project>/grant_network_access')
-def project_grant_network_access(project, network):
+@rest_call('PUT', '/network/<network>/access/<project>')
+def network_grant_project_access(project, network):
    """Add access to <network> to <project>.
    If the project or network does not exist, a NotFoundError will be raised.
    """
@@ -150,8 +150,8 @@ def project_grant_network_access(project, network):
    network.access.append(project)
    db.session.commit()
 
-@rest_call('POST', '/project/<project>/revoke_network_access')
-def project_revoke_network_access(project, network):
+@rest_call('DELETE', '/network/<network>/access/<project>')
+def network_revoke_project_access(project, network):
     """Remove access to <network> from <project>.
     If the project or network does not exist, a NotFoundError will be raised.
     If the project is the owner of the network a BlockedError will be raised.
@@ -560,12 +560,6 @@ def headnode_detach_network(headnode, hnic):
 
 @rest_call('GET', '/networks')
 def list_networks():
-    """List all networks.
-    Returns a JSON dictionary of dictionaries, indexed by the name of the network.
-    The interior dictionaries are indexed by project and channel.
-    
-    Example:  {"netA": {"driver_id": "101", "projects": ["qproj-01", qproj-02"]}, "netB": {"driver_id": "102", "projects": None}}
-    """
     get_auth_backend().require_admin()
 
     networks = db.session.query(model.Network).all()
@@ -581,19 +575,6 @@ def list_networks():
 
 @rest_call('GET', '/network/<network>/attachments')
 def list_network_attachments(network, project=None):
-
-    """List all nodes that are attached to the network.
-api.node_register('node-99', 'ipmihost', 'root', 'tapeworm')
-        api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
-        api.project_create('anvil-nextgen')
-        api.project_connect_node('anvil-nextgen', 'node-99')
-        network_create_simple('hammernet', 'anvil-nextgen')
-    
-    Returns a JSON dictionary of dictionaries with first level key being the name of the attached node and second level keys being:
-    'nic': the name of the nic on which the node is attached
-    'project': the name of the project which owns the attached node
-    Example:  {"node1": {"nic": "nic1", "project": "projectA"}, "node2": {"nic": "nic2", "project": "projectB"}}
-    """
     auth_backend = get_auth_backend()
     network = _must_find(model.Network, network)
     
@@ -654,7 +635,7 @@ def network_create(network, owner, access, net_id):
             raise BadArgumentError("Project-owned networks must be accessed only by that project.")
         if net_id != "":
             raise BadArgumentError("Project-owned networks must use network ID allocation")
-        access = [_must_find(model.Project, access)]    
+        access = [_must_find(model.Project, access)]
     else:
         # Administrator-owned network
         auth_backend.require_admin()

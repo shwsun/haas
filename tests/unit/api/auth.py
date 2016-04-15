@@ -225,7 +225,7 @@ for net in [
         args=[net]))
 
 
-# project_grant_network_access
+# network_grant_project_access
 
 ## Legal cases
 
@@ -238,7 +238,7 @@ for (project, net) in [
     ('manhattan', 'runway_pxe'),
 ]:
     auth_call_params.append(dict(
-        fn=api.project_grant_network_access,
+        fn=api.network_grant_project_access,
         error=None,
         admin=True,
         project=None,
@@ -252,7 +252,7 @@ for (project, project_access, net) in [
     ('runway', 'manhattan', 'runway_pxe'),
 ]:
     auth_call_params.append(dict(
-        fn=api.project_grant_network_access,
+        fn=api.network_grant_project_access,
         error=None,
         admin=False,
         project=project,
@@ -268,14 +268,14 @@ for (project, project_access, net) in [
     ('runway', 'runway', 'manhattan_pxe'),
 ]:
     auth_call_params.append(dict(
-        fn=api.project_grant_network_access,
+        fn=api.network_grant_project_access,
         error=AuthorizationError,
         admin=False,
         project=project,
         args=[project_access, net]
     ))
 
-# project_revoke_network_access
+# network_revoke_project_access
 
 ## Legal cases
 
@@ -290,7 +290,7 @@ for (project, net) in [
     ('manhattan', 'manhattan_runway_provider'),
 ]:
     auth_call_params.append(dict(
-        fn=api.project_revoke_network_access,
+        fn=api.network_revoke_project_access,
         error=None,
         admin=True,
         project=None,
@@ -307,7 +307,7 @@ for (project, project_access, net) in [
     ('runway', 'runway', 'manhattan_runway_provider'),
 ]:
     auth_call_params.append(dict(
-        fn=api.project_revoke_network_access,
+        fn=api.network_revoke_project_access,
         error=None,
         admin=False,
         project=project,
@@ -323,7 +323,7 @@ for (project, project_access, net) in [
     ('manhattan', 'runway', 'manhattan_runway_provider'),
 ]:
     auth_call_params.append(dict(
-        fn=api.project_revoke_network_access,
+        fn=api.network_revoke_project_access,
         error=AuthorizationError,
         admin=False,
         project=project,

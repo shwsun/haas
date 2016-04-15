@@ -333,7 +333,7 @@ def initial_db():
                 'label': 'stock_ext_pub',
             },
             {
-                # For some tests, we want things to initialyl be attached to a
+                # For some tests, we want things to initially be attached to a
                 # network. This one serves that purpose; using the others would
                 # interfere with some of the network_delete tests.
                 'owner': None,
