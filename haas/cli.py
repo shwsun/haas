@@ -378,8 +378,45 @@ def switch_register(switch, subtype, *args):
     eg. haas switch_register mock03 mock mockhost01 mockuser01 mockpass01
     """
     switch_api = "http://schema.massopencloud.org/haas/v0/switches/"
-    switchinfo = { "type": switch_api+subtype, "hostname": args[0],
+
+@cmd
+def switch_register(switch, subtype, *args):
+    """Register a switch with name <switch> and
+    <subtype>, <hostname>, <username>,  <password>
+    eg. haas switch_register mock03 mock mockhost01 mockuser01 mockpass01
+
+    FIXME: current design needs to change. CLI should not know about every backend.
+    ideally, this should be taken care of in the driver itself or 
+    client library (work-in-progress) should manage it.
+    """
+    switch_api = "http://schema.massopencloud.org/haas/v0/switches/"
+    if subtype == "nexus":
+        if len(args) == 4:
+            switchinfo = { "type": switch_api+subtype, "hostname": args[0],
+                        "username": args[1], "password": args[2], "dummy_vlan": args[3] }
+        else:
+            sys.stderr.write('ERROR: subtype '+subtype+' requires exactly 4 arguments\n')
+            sys.stderr.write('<hostname> <username> <password> <dummy_vlan_no>\n')
+            return
+    elif subtype == "mock":
+        if len(args) == 3:
+            switchinfo = { "type": switch_api+subtype, "hostname": args[0],
                         "username": args[1], "password": args[2] }
+        else:
+            sys.stderr.write('ERROR: subtype '+subtype+' requires exactly 3 arguments\n')
+            sys.stderr.write('<hostname> <username> <password>\n')
+            return
+    elif subtype == "powerconnect55xx":
+        if len(args) == 3:
+            switchinfo = { "type": switch_api+subtype, "hostname": args[0],
+                        "username": args[1], "password": args[2] }
+        else:
+            sys.stderr.write('ERROR: subtype '+subtype+' requires exactly 3 arguments\n')
+            sys.stderr.write('<hostname> <username> <password>\n')
+            return
+    else:
+        sys.stderr.write('ERROR: Invalid subtype supplied\n')
+        return
     url = object_url('switch', switch)
     do_put(url, data=switchinfo)
 
@@ -501,11 +538,11 @@ def create_admin_user(username, password):
     if not config.cfg.has_option('extensions', 'haas.ext.auth.database'):
         sys.exit("'make_inital_admin' is only valid with the database auth backend.")
     from haas import model
+    from haas.model import db
     from haas.ext.auth.database import User
-    model.init_db(create=False)
-    db = model.Session()
-    db.add(User(label=username, password=password, is_admin=True))
-    db.commit()
+    model.init_db()
+    db.session.add(User(label=username, password=password, is_admin=True))
+    db.session.commit()
 
 @cmd
 def help(*commands):

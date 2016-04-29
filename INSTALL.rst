@@ -64,7 +64,16 @@ now the solution is to disable SELinux::
 
     sudo setenforce 0
 
-Make sure SELinux is also disabled on startup.
+Make sure SELinux is also disabled on startup. To do this [on
+CentOS/RHEL](https://wiki.centos.org/HowTos/SELinux), edit
+`/etc/selinux/config` to change:
+```
+SELINUX=enforcing
+```
+to
+```
+SELINUX=permissive
+```
 
 Create User
 -----------
@@ -86,6 +95,9 @@ important: ``trunk_nic`` must match your choice of trunk NIC in the "Networking
 
 For a detailed description of the configuration needed for various switch
 setups, see ``docs/network-drivers.md``.
+
+Logging level and directory can be set in the ``[general]`` section. For more
+information view ``docs/logging.md``.
 
 The file should be placed at ``/etc/haas.cfg``; The ``haas.wsgi``
 script, described below, requires this. Awkwardly, the ``haas``
