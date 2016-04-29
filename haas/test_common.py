@@ -290,28 +290,29 @@ def additional_db():
     initial_db()
     manhattan = Project.query.filter_by(label="manhattan").first()
     runway = Project.query.filter_by(label="runway").first()
-    networks=[
-        {
-            'owner': None,
-            'access': [manhattan, runway],
-            'allocated': False,
-            'network_id': 'manhattan_runway_provider_chan',
-            'label': 'manhattan_runway_provider',
-        },
-        {
-            'owner': manhattan,
-            'access': [manhattan, runway],
-            'allocated': True,
-            'label': 'manhattan_runway_pxe',
-        },
-    ]
+    with app.app_context():
+        networks=[ 
+            {
+                'owner': None,
+                'access': [manhattan, runway],
+                'allocated': False,
+                'network_id': 'manhattan_runway_provider_chan',
+                'label': 'manhattan_runway_provider',
+            },
+            {
+                'owner': manhattan,
+                'access': [manhattan, runway],
+                'allocated': True,
+                'label': 'manhattan_runway_pxe',
+            },
+        ]
 
-    for net in networks:
-        if net['allocated']:
-            net['network_id'] = \
-                get_network_allocator().get_new_network_id()
-        db.session.add(Network(**net))
-    db.session.commit()
+        for net in networks:
+            if net['allocated']:
+                net['network_id'] = \
+                    get_network_allocator().get_new_network_id()
+            db.session.add(Network(**net))
+        db.session.commit()
 
 def initial_db():
     """Populates the database with a useful set of objects.
