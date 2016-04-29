@@ -288,8 +288,8 @@ def headnode_cleanup(request):
 
 def additional_db():
     initial_db()
-    manhattan = Project.query.filter_by(label="manhattan").first()
-    runway = Project.query.filter_by(label="runway").first()
+    manhattan = db.session.query(Project).filter_by(label="manhattan").one()
+    runway = db.session.query(Project).filter_by(label="runway").one()
     with app.app_context():
         networks=[ 
             {
