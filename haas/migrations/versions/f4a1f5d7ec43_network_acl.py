@@ -23,7 +23,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['network_id'], ['network.id'], ),
     sa.ForeignKeyConstraint(['project_id'], ['project.id'], )
     )
-    op.alter_column(u'network', 'owner_id', new_column_name='creator_id')
+    op.alter_column(u'network', 'creator_id', new_column_name='owner_id')
     op.drop_constraint(u'network_access_id_fkey', 'network', type_='foreignkey')
     op.drop_column(u'network', 'access_id')
     ### end Alembic commands ###
