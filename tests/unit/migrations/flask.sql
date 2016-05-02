@@ -148,7 +148,8 @@ CREATE TABLE mockswitch (
 CREATE TABLE network (
     id integer NOT NULL,
     label character varying NOT NULL,
-    owner_id integer,
+    creator_id integer,
+    access_id integer,
     allocated boolean,
     network_id character varying NOT NULL
 );
@@ -677,13 +678,13 @@ INSERT INTO mockswitch (id, hostname, username, password) VALUES (2, 'stock', 'b
 -- Data for Name: network; Type: TABLE DATA; Schema: public; Owner: haas
 --
 
-INSERT INTO network (id, label, owner_id, allocated, network_id) VALUES (1, 'stock_int_pub', NULL, true, '100');
-INSERT INTO network (id, label, owner_id, allocated, network_id) VALUES (2, 'stock_ext_pub', NULL, false, 'ext_pub_chan');
-INSERT INTO network (id, label, owner_id, allocated, network_id) VALUES (3, 'pub_default', NULL, true, '101');
-INSERT INTO network (id, label, owner_id, allocated, network_id) VALUES (4, 'runway_pxe', 1, true, '102');
-INSERT INTO network (id, label, owner_id, allocated, network_id) VALUES (5, 'runway_provider', NULL, false, 'runway_provider_chan');
-INSERT INTO network (id, label, owner_id, allocated, network_id) VALUES (6, 'manhattan_pxe', 2, true, '103');
-INSERT INTO network (id, label, owner_id, allocated, network_id) VALUES (7, 'manhattan_provider', NULL, false, 'manhattan_provider_chan');
+INSERT INTO network (id, label, creator_id, access_id, allocated, network_id) VALUES (1, 'stock_int_pub', NULL, NULL, true, '100');
+INSERT INTO network (id, label, creator_id, access_id, allocated, network_id) VALUES (2, 'stock_ext_pub', NULL, NULL, false, 'ext_pub_chan');
+INSERT INTO network (id, label, creator_id, access_id, allocated, network_id) VALUES (3, 'pub_default', NULL, NULL, true, '101');
+INSERT INTO network (id, label, creator_id, access_id, allocated, network_id) VALUES (4, 'runway_pxe', 1, 1, true, '102');
+INSERT INTO network (id, label, creator_id, access_id, allocated, network_id) VALUES (5, 'runway_provider', NULL, 1, false, 'runway_provider_chan');
+INSERT INTO network (id, label, creator_id, access_id, allocated, network_id) VALUES (6, 'manhattan_pxe', 2, 2, true, '103');
+INSERT INTO network (id, label, creator_id, access_id, allocated, network_id) VALUES (7, 'manhattan_provider', NULL, 2, false, 'manhattan_provider_chan');
 
 
 --
@@ -1389,12 +1390,21 @@ ALTER TABLE ONLY mockobm
 ALTER TABLE ONLY mockswitch
     ADD CONSTRAINT mockswitch_id_fkey FOREIGN KEY (id) REFERENCES switch(id);
 
+
 --
--- Name: network_owner_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: haas
+-- Name: network_access_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: haas
 --
 
 ALTER TABLE ONLY network
-    ADD CONSTRAINT network_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES project(id);
+    ADD CONSTRAINT network_access_id_fkey FOREIGN KEY (access_id) REFERENCES project(id);
+
+
+--
+-- Name: network_creator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: haas
+--
+
+ALTER TABLE ONLY network
+    ADD CONSTRAINT network_creator_id_fkey FOREIGN KEY (creator_id) REFERENCES project(id);
 
 
 --
@@ -1504,4 +1514,3 @@ ALTER TABLE ONLY user_projects
 --
 -- PostgreSQL database dump complete
 --
-
