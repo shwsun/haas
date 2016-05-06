@@ -1,18 +1,18 @@
-"""network ACL
+"""networkACL2
 
-Revision ID: f4a1f5d7ec43
+Revision ID: 89630e3872ec
 Revises: 6a8c19565060
-Create Date: 2016-04-26 13:34:54.910541
+Create Date: 2016-05-06 09:24:26.911562
 
 """
 
-revision = 'f4a1f5d7ec43'
+# revision identifiers, used by Alembic.
+revision = '89630e3872ec'
 down_revision = '6a8c19565060'
 branch_labels = None
 
 from alembic import op
 import sqlalchemy as sa
-
 
 def upgrade():
     op.create_table('network_projects',
