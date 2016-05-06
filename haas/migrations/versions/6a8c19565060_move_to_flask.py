@@ -13,7 +13,7 @@ Create Date: 2016-03-15 23:40:11.411599
 # revision identifiers, used by Alembic.
 revision = '6a8c19565060'
 down_revision = None
-branch_labels = ('haas',)
+branch_labels = None
 
 from alembic import op
 

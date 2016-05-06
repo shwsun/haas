@@ -98,6 +98,11 @@ script is for an extension) or `haas` (if the script is for HaaS core).
 
 Alembic will generate a migration script in the appropriate directory. Again,
 sanity check the output; Alembic's guesses should not be trusted blindly.
+You should change value of the `branch_labels` variable to
+`(${branch_name},)` (do not leave out the trailing comma; this makes it
+a tuple rather than a single value). You should *not* modify the value
+of `down_revision`, which should only be changed when creating the first
+script for an extension.
 
 ## Writing tests
 
