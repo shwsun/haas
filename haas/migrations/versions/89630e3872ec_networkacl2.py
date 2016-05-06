@@ -9,7 +9,7 @@ Create Date: 2016-05-06 09:24:26.911562
 # revision identifiers, used by Alembic.
 revision = '89630e3872ec'
 down_revision = '6a8c19565060'
-branch_labels = None
+branch_labels = ('haas',)
 
 from alembic import op
 import sqlalchemy as sa
