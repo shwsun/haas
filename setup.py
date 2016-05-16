@@ -14,6 +14,7 @@
 
 from setuptools import setup, find_packages
 from os.path import dirname, join
+
 readme_file = 'README.rst'
 
 def _get_readme():
@@ -32,8 +33,8 @@ setup(name='haas',
       license='Apache 2.0',
       classifiers=['Development Status :: 4 - Beta',
                    'Intended Audience :: Developers',
-                   'Intended Audience :: System Administrators', 
-                   'Intended Audience :: Science/Research', 
+                   'Intended Audience :: System Administrators',
+                   'Intended Audience :: Science/Research',
                    'Topic :: System :: Cloud :: Installation/Setup',
                    'Topic :: System :: Systems Administration :: Clustering :: Utilities ',
                    'License :: OSI Approved :: Apache Software License, version 2.0',

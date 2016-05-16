@@ -21,3 +21,14 @@ Here is the consistency model for headnodes.
     It's also possible that, eventually, we might allow networking changes to
     powered-off headnodes.  (It's semantically reasonable, but might be tricky
     in implementation.)
+
+---
+
+Here is the consistency model after adopting the replacing headnode with Openvpn.
+
+
+- ``ovpn_start``, ``ovpn_stop``: This circle is used to start openvpn service or stop the service.
+
+- ``ovpn_start``: User should call ``bridge-start`` and then run ``ovpn``.
+
+- ``ovpn_stop``: User should call ``bridge-stop`` and then stop ``ovpn``.

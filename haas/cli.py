@@ -23,6 +23,7 @@ import requests
 import sys
 import urllib
 import schema
+import subprocess
 
 from functools import wraps
 
@@ -288,8 +289,6 @@ def node_register(node, subtype, *args):
 
     url = object_url('node', node)
     do_put(url, data={"obm": obminfo})
-
-
 
 @cmd
 def node_delete(node):
