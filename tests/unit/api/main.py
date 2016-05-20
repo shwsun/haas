@@ -369,6 +369,7 @@ class TestProjectConnectDetachNode:
 class TestRegisterCorrectObm:
     """Tests that node_register stores obm driver information into
     correct corresponding tables
+
     """
 
     def test_ipmi(self):
@@ -1518,8 +1519,8 @@ class TestQuery:
         api.project_create('anvil-nextgen')
         network_create_simple('netA', 'anvil-nextgen')
         result = json.loads(api.list_networks())
-        temp1 = uuid.UUID(result['netA']['driver_id'])
-        del result['netA']['driver_id']
+        temp1 = uuid.UUID(result['netA']['network_id'])
+        del result['netA']['network_id']
         assert result == {
             'netA': {'projects': ['anvil-nextgen']}
         }
@@ -1531,7 +1532,7 @@ class TestQuery:
 
         result = json.loads(api.list_networks())
         assert result == {
-            'spiderwebs': {'driver_id': '451', 'projects':None}
+            'spiderwebs': {'network_id': '451', 'projects':None}
         }
 
     def test_list_network_attachments(self):

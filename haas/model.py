@@ -48,9 +48,6 @@ app.config.update(SQLALCHEMY_TRACK_MODIFICATIONS=False)
 def init_db(uri=None):
     """Start up the DB connection.
 
-    If `create` is True, this will generate the schema for the database, and
-    perform initial population of tables.
-
     `uri` is the uri to use for the databse. If it is None, the uri from the
     config file will be used.
     """
@@ -58,7 +55,7 @@ def init_db(uri=None):
         uri = cfg.get('database', 'uri')
     app.config.update(SQLALCHEMY_DATABASE_URI=uri)
 
-# A joining table for networks and projects, which have a many to many relationship:
+# A joining table for project's access to networks, which have a many to many relationship:
 network_projects = db.Table('network_projects',
                     db.Column('project_id', db.ForeignKey('project.id')),
                     db.Column('network_id', db.ForeignKey('network.id')))

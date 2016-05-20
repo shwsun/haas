@@ -136,7 +136,9 @@ def project_detach_node(project, node):
 @rest_call('PUT', '/network/<network>/access/<project>')
 def network_grant_project_access(project, network):
    """Add access to <network> to <project>.
+
    If the project or network does not exist, a NotFoundError will be raised.
+   If the project already has access to the network a DuplicateError will be raised.
    """
    network = _must_find(model.Network, network)
    project = _must_find(model.Project, project)
@@ -153,6 +155,7 @@ def network_grant_project_access(project, network):
 @rest_call('DELETE', '/network/<network>/access/<project>')
 def network_revoke_project_access(project, network):
     """Remove access to <network> from <project>.
+
     If the project or network does not exist, a NotFoundError will be raised.
     If the project is the owner of the network a BlockedError will be raised.
     """
@@ -163,26 +166,28 @@ def network_revoke_project_access(project, network):
     
     if network.access:
         for proj in network.access:
-            authorized = authorized or ((proj.label == project.label) and get_auth_backend().have_project_access(proj))
+            authorized = authorized or ((proj.label == project.label) and 
+                                        get_auth_backend().have_project_access(proj))
             
     if not authorized:
-        raise AuthorizationError("You do not have access to this project.")
+        raise AuthorizationError("You are not authorized to remove the specified project form this network.")
    
     if project not in network.access:
-        raise NotFoundError("Network %s is not in project %s"%
+        raise NotFoundError("Network %r is not in project %r"%
                             (network.label, project.label))
 
     if project is network.owner:
-        raise BlockedError("Project %s is owner of network %s and its access cannot be removed"%
+        raise BlockedError("Project %r is owner of network %r and its access cannot be removed"%
                            (project.label, network.label))
 
-    num_attachments = 0
     for attachment in network.attachments:
         if attachment.nic.owner.project.label == project.label:
-            num_attachments += 1
+            raise BlockedError("Project still has node(s) attached to the network")
 
-    if num_attachments != 0:
-        raise BlockedError("Project still has nodes attached to the network")
+    for hnic in network.hnics:
+        if hnic.owner.project.label == project.label:
+            raise BlockedError("Project still has headnode(s) attached to the network")
+
 
     network.access.remove(project)
     db.session.commit()
@@ -560,21 +565,28 @@ def headnode_detach_network(headnode, hnic):
 
 @rest_call('GET', '/networks')
 def list_networks():
+    """Lists all networks
+
+    """
     get_auth_backend().require_admin()
 
     networks = db.session.query(model.Network).all()
     result = {}
     for n in networks:
         if n.access:
-            net = {'driver_id': n.network_id, 'projects': [p.label for p in n.access]}
+            net = {'network_id': n.network_id, 'projects': [p.label for p in n.access]}
         else:
-            net = {'driver_id': n.network_id, 'projects': None}
+            net = {'network_id': n.network_id, 'projects': None}
         result[n.label] = net
             
     return json.dumps(result, sort_keys = True)
 
 @rest_call('GET', '/network/<network>/attachments')
 def list_network_attachments(network, project=None):
+    """Lists all the attachments from <project> for <network>
+
+    If <project> is not specified, lists all attachments for <network>
+    """
     auth_backend = get_auth_backend()
     network = _must_find(model.Network, network)
     
@@ -632,7 +644,7 @@ def network_create(network, owner, access, net_id):
         auth_backend.require_project_access(owner)
         # Project-owned network
         if access != owner.label:
-            raise BadArgumentError("Project-owned networks must be accessed only by that project.")
+            raise BadArgumentError("Project-owned networks must be accessible by the owner.")
         if net_id != "":
             raise BadArgumentError("Project-owned networks must use network ID allocation")
         access = [_must_find(model.Project, access)]

@@ -8,7 +8,7 @@ Networks in the HaaS have three fields:
   then that project cannot be deleted.  Only the owner has the ability to
   delete a network.
 
-- 'access' represents which projects' nodes can access it, or [] (the
+- 'access' represents which projects' nodes can access it, or `[]` (the
   empty list) if all   projects' nodes can.
 
 - 'allocated' represents whether the underlying network ID was taken from the

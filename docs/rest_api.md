@@ -137,7 +137,7 @@ The result must contain the following fields:
   format of these is driver specific, see below.
 * "owner", the name of the project which created the network, or
   "admin", if it was created by an administrator.
-* "access", a list of projects that have access to the network or 'None' if the network is public
+* "access", a list of projects that have access to the network or null if the network is public
 
 Response body (on success):
 
@@ -145,7 +145,7 @@ Response body (on success):
         "name": <network>,
         "channels": <chanel-id-list>,
         "creator": <project or "admin">,
-        "access": <project(s) with access to the network/None>
+        "access": <project(s) with access to the network/null>
     }
 
 Authorization requirements:
@@ -175,28 +175,30 @@ default channel, the VLAN drivers choose `vlan/native`.
 
 List all networks.
 
-Returns a JSON dictionary of dictionaries, indexed by the name of the network with interior dictionaries indexed by project and channel.
+Returns a JSON dictionary of dictionaries, where the exterior dictionary is indexed by 
+the network name and the value of each key is another dictionary with keys corresponding 
+to that network's id and projects
 
 The response must contain the following fields:
 
 * "network", the name of a network
-* "driver_id", the id of the network
+* "network_id", the id of the network
 * "projects", a list of projects with access to the network or 'None' if network is public 
 
 Example Response:  
 	{
 		"netA": {
-			"driver_id": "101", 
+			"network_id": "101", 
 			"projects": ["qproj-01", qproj-02"]
 			},
 		"netB": {
-			"driver_id": "102", 
+			"network_id": "102", 
 			"projects": None}
 	}
 
 Authorization requirements:
 
-Only admins can list the networks.
+Administrative access is required
 
 ### list_network_attachments
 
@@ -204,9 +206,11 @@ Only admins can list the networks.
 
 List all nodes that are attached to network <network>.
     
-If optional argument 'project' is supplied will only list attached nodes belonging to the specified project.
+If optional argument 'project' is supplied will only list attached nodes 
+belonging to the specified project.
 
-Returns a JSON dictionary of dictionaries with first level key being the name of the attached node and second level keys being:
+Returns a JSON dictionary of dictionaries with first level key being the name 
+of the attached node and second level keys being:
 
 * "nic", the name of the nic on which the node is attached
 * "channel", the channel on which the attachment exists
@@ -236,11 +240,15 @@ Admins or the project that is the owner can list all attached nodes. Other proje
 
 Add <project> to access list for <network>.
 
-If the network or project does not exist a NotFoundError will be raised.
-
 Authorization requirements:
 
 Only admins or the network owner can grant a project access to the network.
+
+Possible Errors:
+
+* 400, if:
+   * the network or project does not exist
+   * the project already has access to the network
 
 ### network_revoke_project_access
 
@@ -248,12 +256,15 @@ Only admins or the network owner can grant a project access to the network.
 
 Remove <project> from access list for <network>.
 
-If the network or project does not exist a NotFoundError will be raised.
-If the project is the owner of the network a BlockedError will be raised.
-
 Authorization requirements:
 
 Only admins, the network owner, or the project itself can revoke a project's access to the network.
+
+Possible Errors:
+
+* 400 - If the network or project does not exist.
+* 409 - If the project is the owner of the network.
+
 
 ### node_connect_network
 

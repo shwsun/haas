@@ -288,6 +288,15 @@ def headnode_cleanup(request):
     request.addfinalizer(undefine_headnodes)
 
 def additional_db():
+    """ Populated database with additional objects needed for testing,
+    specifically for the addition of Network ACLs which require a many
+    to many project network relationship.
+
+    the database setup in initial_db is required to remain static as 
+    a starting point for database migrations so any changes needed for
+    testing should be made in additional_db
+    """
+
     initial_db()
     manhattan = db.session.query(Project).filter_by(label="manhattan").one()
     runway = db.session.query(Project).filter_by(label="runway").one()
@@ -320,6 +329,9 @@ def initial_db():
 
     This allows us to avoid some boilerplate in tests which need a few objects
     in the database in order to work.
+
+    Is static to allow database migrations to be tested, if new objects need 
+    to be added they should be included in additional_db not initial_db.
 
     Note that this fixture requires the use of the following extensions:
 
