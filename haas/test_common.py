@@ -127,6 +127,7 @@ def newDB():
 def releaseDB():
     """Do we need to do anything here to release resources?"""
     with app.app_context():
+        #removed reflect
         db.drop_all()
 
 def fresh_database(request):
