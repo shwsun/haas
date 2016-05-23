@@ -565,9 +565,8 @@ def headnode_detach_network(headnode, hnic):
 
 @rest_call('GET', '/networks')
 def list_networks():
-    """Lists all networks
+    """Lists all networks"""
 
-    """
     get_auth_backend().require_admin()
 
     networks = db.session.query(model.Network).all()
@@ -581,7 +580,9 @@ def list_networks():
             
     return json.dumps(result, sort_keys = True)
 
-@rest_call('GET', '/network/<network>/attachments')
+@rest_call('GET', '/network/<network>/attachments', schema=Schema({
+    Optional('project'): basestring,
+}))
 def list_network_attachments(network, project=None):
     """Lists all the attachments from <project> for <network>
 
@@ -715,8 +716,6 @@ def show_network(network):
     network = _must_find(model.Network, network)
 
     if network.access:
-        #auth tests: admin owned networks with a project access
-        #TODO only network owner allowed to show the network?
         authorized = False
         for proj in network.access:
             authorized = authorized or auth_backend.have_project_access(proj)
