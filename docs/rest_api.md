@@ -246,9 +246,8 @@ Only admins or the network owner can grant a project access to the network.
 
 Possible Errors:
 
-* 400, if:
-   * the network or project does not exist
-   * the project already has access to the network
+* 404 - If the network or project does not exist
+* 409 - If the project already has access to the network
 
 ### network_revoke_project_access
 
@@ -262,7 +261,7 @@ Only admins, the network owner, or the project itself can revoke a project's acc
 
 Possible Errors:
 
-* 400 - If the network or project does not exist.
+* 404 - If the network or project does not exist.
 * 409 - If the project is the owner of the network.
 
 
