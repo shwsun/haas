@@ -151,7 +151,8 @@ Response body (on success):
 Authorization requirements:
 
 * If the network is public, no special access is required.
-* Otherwise, access to the a project in the "access" list is required.
+* Otherwise, access to a project in the "access" list or 
+administrative access is required.
 
 #### Channel Formats
 
