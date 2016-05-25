@@ -138,7 +138,9 @@ def project_detach_node(project, node):
     project.nodes.remove(node)
     db.session.commit()
 
-@rest_call('PUT', '/network/<network>/access/<project>')
+@rest_call('PUT', '/network/<network>/access/<project>', Schema({
+    'project': basestring, 'network': basestring,
+}))
 def network_grant_project_access(project, network):
    """Add access to <network> to <project>.
 
@@ -157,7 +159,9 @@ def network_grant_project_access(project, network):
    network.access.append(project)
    db.session.commit()
 
-@rest_call('DELETE', '/network/<network>/access/<project>')
+@rest_call('DELETE', '/network/<network>/access/<project>', Schema({
+    'project': basestring, 'network': basestring,
+}))
 def network_revoke_project_access(project, network):
     """Remove access to <network> from <project>.
 
@@ -344,7 +348,7 @@ def node_connect_network(node, nic, network, channel=None):
     if nic.current_action:
         raise BlockedError("A networking operation is already active on the nic.")
 
-    if (network.access is not None) and (network.access is not project):
+    if (network.access) and (project not in network.access):
         raise ProjectMismatchError("Project does not have access to given network.")
 
     if _have_attachment(nic, model.NetworkAttachment.network == network):
@@ -592,7 +596,7 @@ def headnode_detach_network(headnode, hnic):
                             # Network Code #
                             ################
 
-@rest_call('GET', '/networks')
+@rest_call('GET', '/networks', Schema({}))
 def list_networks():
     """Lists all networks"""
 
@@ -610,7 +614,7 @@ def list_networks():
     return json.dumps(result, sort_keys = True)
 
 @rest_call('GET', '/network/<network>/attachments', schema=Schema({
-    Optional('project'): basestring,
+    'network': basestring, Optional('project'): basestring,
 }))
 def list_network_attachments(network, project=None):
     """Lists all the attachments from <project> for <network>
@@ -737,7 +741,7 @@ def network_delete(network):
     db.session.commit()
 
 
-@rest_call('GET', '/network/<network>')
+@rest_call('GET', '/network/<network>', Schema({'network': basestring}))
 def show_network(network):
     """Show details of a network.
 
