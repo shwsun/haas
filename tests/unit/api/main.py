@@ -1528,8 +1528,8 @@ class TestQuery_populated_db:
         assert result == {
             'manhattan_provider': {'projects':['manhattan']},
             'manhattan_pxe': {'projects':['manhattan']},
-            'manhattan_runway_provider': {'projects':['runway', 'manhattan']},
-            'manhattan_runway_pxe': {'projects':['runway', 'manhattan']},
+            'manhattan_runway_provider': {'projects':['manhattan', 'runway']},
+            'manhattan_runway_pxe': {'projects':['manhattan', 'runway']},
             'pub_default': {'projects':None},
             'runway_provider': {'projects':['runway']},
             'runway_pxe': {'projects':['runway']},
