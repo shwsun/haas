@@ -606,7 +606,7 @@ def list_networks():
     result = {}
     for n in networks:
         if n.access:
-            net = {'network_id': n.network_id, 'projects': [p.label for p in n.access]}
+            net = {'network_id': n.network_id, 'projects': sorted([p.label for p in n.access])}
         else:
             net = {'network_id': n.network_id, 'projects': None}
         result[n.label] = net
