@@ -41,7 +41,7 @@ def configure():
 
 
 fresh_database = pytest.fixture(fresh_database)
-
+additional_database = pytest.fixture(additional_db)
 
 @pytest.fixture
 def server_init():
@@ -52,45 +52,35 @@ def server_init():
 with_request_context = pytest.yield_fixture(with_request_context)
 
 
-pytestmark = pytest.mark.usefixtures('configure',
-                                     'fresh_database',
-                                     'server_init',
-                                     'with_request_context')
-
-
 class TestProjectCreateDelete:
     """Tests for the haas.api.project_* functions."""
+
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'additional_database',
+                                         'server_init',
+                                         'with_request_context')
 
     def test_project_create_success(self):
         api.project_create('anvil-nextgen')
         api._must_find(model.Project, 'anvil-nextgen')
 
     def test_project_create_duplicate(self):
-        api.project_create('anvil-nextgen')
         with pytest.raises(api.DuplicateError):
-            api.project_create('anvil-nextgen')
+            api.project_create('manhattan')
 
     def test_project_delete(self):
-        api.project_create('anvil-nextgen')
-        api.project_delete('anvil-nextgen')
+        api.project_delete('empty-project')
         with pytest.raises(api.NotFoundError):
-            api._must_find(model.Project, 'anvil-nextgen')
+            api._must_find(model.Project, 'empty-project')
 
     def test_project_delete_nexist(self):
         with pytest.raises(api.NotFoundError):
             api.project_delete('anvil-nextgen')
 
     def test_project_delete_hasnode(self):
-        api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
-
-        api.project_create('anvil-nextgen')
-        api.project_connect_node('anvil-nextgen', 'node-99')
         with pytest.raises(api.BlockedError):
-            api.project_delete('anvil-nextgen')
+            api.project_delete('manhattan')
 
     def test_project_delete_success_nodesdeleted(self):
         api.node_register('node-99', obm={
@@ -134,54 +124,45 @@ class TestProjectCreateDelete:
 
 class TestProjectAddDeleteNetwork:
     """Tests for adding and deleting a network from a project"""
+
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'additional_database',
+                                         'server_init',
+                                         'with_request_context')
      
     def test_network_grant_project_access(self):
-        api.project_create('acme-corp')
-        api.project_create('anvil-nextgen')
-        network_create_simple('hammernet', 'acme-corp')
-        api.network_grant_project_access('anvil-nextgen', 'hammernet')
-        network = api._must_find(model.Network, 'hammernet')
-        project = api._must_find(model.Project, 'anvil-nextgen')
+        api.network_grant_project_access('manhattan', 'runway_pxe')
+        network = api._must_find(model.Network, 'runway_pxe')
+        project = api._must_find(model.Project, 'manhattan')
         assert project in network.access
         assert network in project.networks_access
          
     def test_network_revoke_project_access(self):
-        api.project_create('acme-corp')
-        api.project_create('anvil-nextgen')
-        network_create_simple('hammernet', 'acme-corp')
-        api.network_grant_project_access('anvil-nextgen', 'hammernet')
-        api.network_revoke_project_access('anvil-nextgen', 'hammernet')
-        network = api._must_find(model.Network, 'hammernet')
-        project = api._must_find(model.Project, 'anvil-nextgen')
+        api.network_revoke_project_access('runway', 'runway_provider')
+        network = api._must_find(model.Network, 'runway_provider')
+        project = api._must_find(model.Project, 'runway')
         assert project not in network.access
         assert network not in project.networks_access
 
     def test_network_revoke_project_access_connected_node(self):
-        api.project_create('acme-corp')
-        api.project_create('anvil-nextgen')
-        network_create_simple('hammernet', 'acme-corp')
-        api.network_grant_project_access('anvil-nextgen', 'hammernet')
-        api.node_register('node-99', obm={
-             "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-             "host": "ipmihost",
-             "user": "root",
-             "password": "tapeworm"})
-
-        api.project_connect_node('anvil-nextgen', 'node-99')
-        api.node_register_nic('node-99', 'eth0', 'DE:AD:BE:EF:20:14')
-        api.node_connect_network('node-99', 'eth0', 'hammernet')
+        api.node_register_nic('runway_node_0', 'eth0', 'DE:AD:BE:EF:20:14')
+        api.node_connect_network('runway_node_0', 'eth0', 'runway_provider')
         deferred.apply_networking()
        
         with pytest.raises(api.BlockedError):
-            api.network_revoke_project_access('anvil-nextgen', 'hammernet')
+            api.network_revoke_project_access('runway', 'runway_provider')
 
     def test_project_remove_network_owner(self):
-        api.project_create('acme-corp')
-        network_create_simple('hammernet', 'acme-corp')
         with pytest.raises(api.BlockedError):
-            api.network_revoke_project_access('acme-corp', 'hammernet')
+            api.network_revoke_project_access('runway', 'runway_pxe')
 
 class TestNetworking:
+
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
 
     def test_networking_involved(self):
         api.switch_register('sw0', type=MOCK_SWITCH_TYPE,
@@ -236,6 +217,11 @@ class TestNetworking:
 
 
 class TestProjectConnectDetachNode:
+
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
 
     def test_project_connect_node(self):
         api.project_create('anvil-nextgen')
@@ -372,6 +358,12 @@ class TestRegisterCorrectObm:
 
     """
 
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
+
+
     def test_ipmi(self):
         api.node_register('compute-01', obm={
                   "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
@@ -406,6 +398,11 @@ class TestRegisterCorrectObm:
 
 class TestNodeRegisterDelete:
     """Tests for the haas.api.node_* functions."""
+
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
 
     def test_node_register(self):
         api.node_register('node-99', obm={
@@ -455,6 +452,11 @@ class TestNodeRegisterDelete:
 
 
 class TestNodeRegisterDeleteNic:
+
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
 
     def test_node_register_nic(self):
         api.node_register('compute-01', obm={
@@ -546,6 +548,11 @@ class TestNodeRegisterDeleteNic:
 
 
 class TestNodeConnectDetachNetwork:
+
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
 
     def test_node_connect_network_success(self):
         api.node_register('node-99', obm={
@@ -838,6 +845,11 @@ class TestNodeConnectDetachNetwork:
 
 class TestHeadnodeCreateDelete:
 
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
+
     def test_headnode_create_success(self):
         api.project_create('anvil-nextgen')
         api.headnode_create('hn-0', 'anvil-nextgen', 'base-headnode')
@@ -877,6 +889,11 @@ class TestHeadnodeCreateDelete:
 
 
 class TestHeadnodeCreateDeleteHnic:
+
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
 
     def test_headnode_create_hnic_success(self):
         api.project_create('anvil-nextgen')
@@ -940,6 +957,11 @@ class TestHeadnodeCreateDeleteHnic:
 
 
 class TestHeadnodeConnectDetachNetwork:
+
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
 
     def test_headnode_connect_network_success(self):
         api.project_create('anvil-nextgen')
@@ -1080,6 +1102,11 @@ class TestHeadnodeConnectDetachNetwork:
 
 class TestHeadnodeFreeze:
 
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
+
     # We can't start the headnodes for real in the test suite, but we need
     # "starting" them to still clear the dirty bit.
     @pytest.fixture(autouse=True)
@@ -1159,6 +1186,11 @@ class TestHeadnodeFreeze:
 class TestNetworkCreateDelete:
     """Tests for the haas.api.network_* functions."""
 
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
+
     def test_network_create_success(self):
         api.project_create('anvil-nextgen')
         network_create_simple('hammernet', 'anvil-nextgen')
@@ -1231,6 +1263,11 @@ class TestNetworkCreateDelete:
 
 class Test_switch_register:
 
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
+
     def test_basic(self):
         """Calling switch_register should create an object in the db."""
         api.switch_register('sw0', type=MOCK_SWITCH_TYPE,
@@ -1248,6 +1285,11 @@ class Test_switch_register:
 
 class Test_switch_delete:
 
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
+
     def test_basic(self):
         """Deleting a switch should actually remove it."""
         api.switch_register('sw0', type=MOCK_SWITCH_TYPE,
@@ -1262,6 +1304,12 @@ class Test_switch_delete:
 
 
 class Test_switch_register_port:
+
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
+
 
     def test_basic(self):
         """Creating a port on an existing switch should succeed."""
@@ -1279,6 +1327,11 @@ class Test_switch_register_port:
 
 
 class Test_switch_delete_port:
+
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
 
     def test_basic(self):
         """Removing a port should remove it from the db."""
@@ -1302,6 +1355,11 @@ class Test_switch_delete_port:
 
 
 class TestPortConnectDetachNic:
+
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
 
     def test_port_connect_nic_success(self):
         api.switch_register('sw0', type=MOCK_SWITCH_TYPE,
@@ -1454,9 +1512,113 @@ class TestPortConnectDetachNic:
         with pytest.raises(api.BlockedError):
             api.port_detach_nic('sw0', '3')
 
+class TestQuery_populated_db:    
+    """test portions of the query api with a populated database"""
 
-class TestQuery:
-    """test the query api"""
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'additional_database',
+                                         'server_init',
+                                         'with_request_context')
+
+    def test_list_networks(self):
+        result = json.loads(api.list_networks())
+        for net in result.keys():
+            del result[net]['network_id']
+        assert result == {
+            'manhattan_provider': {'projects':['manhattan']},
+            'manhattan_pxe': {'projects':['manhattan']},
+            'manhattan_runway_provider': {'projects':['runway', 'manhattan']},
+            'manhattan_runway_pxe': {'projects':['runway', 'manhattan']},
+            'pub_default': {'projects':None},
+            'runway_provider': {'projects':['runway']},
+            'runway_pxe': {'projects':['runway']},
+            'stock_ext_pub': {'projects': None},
+            'stock_int_pub': {'projects': None},
+        }
+
+    def test_list_network_attachments(self):
+        api.node_register_nic('runway_node_0', 'r-eth0', 'DE:AD:BE:EF:20:14')
+        api.node_register_nic('manhattan_node_0', 'm-eth0', 'DE:AD:BE:EF:20:14')
+        api.node_connect_network('runway_node_0', 'r-eth0', 'manhattan_runway_pxe')
+        api.node_connect_network('manhattan_node_0', 'm-eth0', 'manhattan_runway_pxe')
+        deferred.apply_networking()
+
+        actual = json.loads(api.list_network_attachments('manhattan_runway_pxe'))
+        expected = {
+            'manhattan_node_0':
+                {
+                    'nic': 'm-eth0',
+                    'channel': get_network_allocator().get_default_channel(),
+                    'project': 'manhattan'
+                },
+            'runway_node_0': 
+                {
+                    'nic': 'r-eth0',
+                    'channel': get_network_allocator().get_default_channel(),
+                    'project': 'runway'
+                }
+            }
+        assert actual == expected
+
+    def test_list_network_attachments_for_project(self):
+        api.node_register('node-99', obm={
+		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+		  "host": "ipmihost", 
+		  "user": "root", 
+		  "password": "tapeworm"})
+        api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
+        api.project_create('anvil-nextgen')
+        api.project_connect_node('anvil-nextgen', 'node-99')
+        network_create_simple('hammernet', 'anvil-nextgen')
+        api.node_connect_network('node-99', '99-eth0', 'hammernet')
+        deferred.apply_networking()
+        api.node_register('node-100', obm={
+		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+		  "host": "ipmihost", 
+		  "user": "root", 
+		  "password": "tapeworm"})
+        api.node_register_nic('node-100', '100-eth0', 'DE:AD:BE:EF:20:14')
+        api.project_create('anvil-oldtimer')
+        api.project_connect_node('anvil-oldtimer', 'node-100')
+        api.network_grant_project_access('anvil-oldtimer', 'hammernet')
+        api.node_connect_network('node-100', '100-eth0', 'hammernet')
+        deferred.apply_networking()
+        
+        actual = json.loads(api.list_network_attachments('hammernet', 'anvil-nextgen'))
+        expected = {
+            'node-99':
+            {
+                'nic': '99-eth0',
+                'channel': get_network_allocator().get_default_channel(),
+                'project': 'anvil-nextgen'
+            },
+        }
+       
+        api.node_register_nic('runway_node_0', 'r-eth0', 'DE:AD:BE:EF:20:14')
+        api.node_register_nic('manhattan_node_0', 'm-eth0', 'DE:AD:BE:EF:20:14')
+        api.node_connect_network('runway_node_0', 'r-eth0', 'manhattan_runway_pxe')
+        api.node_connect_network('manhattan_node_0', 'm-eth0', 'manhattan_runway_pxe')
+        deferred.apply_networking()
+
+        actual = json.loads(api.list_network_attachments('manhattan_runway_pxe', 'runway'))
+        expected = {
+            'runway_node_0': 
+                {
+                    'nic': 'r-eth0',
+                    'channel': get_network_allocator().get_default_channel(),
+                    'project': 'runway'
+                }
+            } 
+        assert actual == expected
+
+class TestQuery_unpopulated_db:
+    """test portions of the query api with a fresh database"""
+
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
 
     def _compare_node_dumps(self, actual, expected):
         """This is a helper method which compares the parsed json output of
@@ -1502,6 +1664,9 @@ class TestQuery:
             'robocop',
         ]
 
+    def test_list_networks_none(self):
+        assert json.loads(api.list_networks()) == {}
+
     def test_list_projects(self):
         assert json.loads(api.list_projects()) == []
         api.project_create('anvil-nextgen')
@@ -1513,104 +1678,6 @@ class TestQuery:
             'manhattan',
             'runway',
         ]
-
-    def test_list_networks(self):
-        assert json.loads(api.list_networks()) == {}
-        api.project_create('anvil-nextgen')
-        network_create_simple('netA', 'anvil-nextgen')
-        result = json.loads(api.list_networks())
-        temp1 = uuid.UUID(result['netA']['network_id'])
-        del result['netA']['network_id']
-        assert result == {
-            'netA': {'projects': ['anvil-nextgen']}
-        }
-        api.network_delete('netA')
-        api.network_create('spiderwebs',
-                           owner='admin',
-                           access='',
-                           net_id='451')
-
-        result = json.loads(api.list_networks())
-        assert result == {
-            'spiderwebs': {'network_id': '451', 'projects':None}
-        }
-
-    def test_list_network_attachments(self):
-        api.node_register('node-99', obm={
-		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-		  "host": "ipmihost", 
-		  "user": "root", 
-		  "password": "tapeworm"})
-        api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
-        api.project_create('anvil-nextgen')
-        api.project_connect_node('anvil-nextgen', 'node-99')
-        network_create_simple('hammernet', 'anvil-nextgen')
-        api.node_connect_network('node-99', '99-eth0', 'hammernet')
-        deferred.apply_networking()
-        api.node_register('node-100', obm={
-		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-		  "host": "ipmihost", 
-		  "user": "root", 
-		  "password": "tapeworm"})        
-        api.node_register_nic('node-100', '100-eth0', 'DE:AD:BE:EF:20:14')
-        api.project_create('anvil-oldtimer')
-        api.project_connect_node('anvil-oldtimer', 'node-100')
-        api.network_grant_project_access('anvil-oldtimer', 'hammernet')
-        api.node_connect_network('node-100', '100-eth0', 'hammernet')
-        deferred.apply_networking()
-
-        actual = json.loads(api.list_network_attachments('hammernet'))
-        expected = {
-            'node-99':
-                {
-                    'nic': '99-eth0',
-                    'channel': get_network_allocator().get_default_channel(),
-                    'project': 'anvil-nextgen'
-                },
-            'node-100': 
-                {
-                    'nic': '100-eth0',
-                    'channel': get_network_allocator().get_default_channel(),
-                    'project': 'anvil-oldtimer'
-                }
-            }
-        assert actual == expected
-
-    def test_list_network_attachments_for_project(self):
-        api.node_register('node-99', obm={
-		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-		  "host": "ipmihost", 
-		  "user": "root", 
-		  "password": "tapeworm"})
-        api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
-        api.project_create('anvil-nextgen')
-        api.project_connect_node('anvil-nextgen', 'node-99')
-        network_create_simple('hammernet', 'anvil-nextgen')
-        api.node_connect_network('node-99', '99-eth0', 'hammernet')
-        deferred.apply_networking()
-        api.node_register('node-100', obm={
-		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-		  "host": "ipmihost", 
-		  "user": "root", 
-		  "password": "tapeworm"})
-        api.node_register_nic('node-100', '100-eth0', 'DE:AD:BE:EF:20:14')
-        api.project_create('anvil-oldtimer')
-        api.project_connect_node('anvil-oldtimer', 'node-100')
-        api.network_grant_project_access('anvil-oldtimer', 'hammernet')
-        api.node_connect_network('node-100', '100-eth0', 'hammernet')
-        deferred.apply_networking()
-        
-        actual = json.loads(api.list_network_attachments('hammernet', 'anvil-nextgen'))
-        expected = {
-            'node-99':
-            {
-                'nic': '99-eth0',
-                'channel': get_network_allocator().get_default_channel(),
-                'project': 'anvil-nextgen'
-            },
-        }
-        
-        assert actual == expected
 
     def test_no_free_nodes(self):
         assert json.loads(api.list_free_nodes()) == []
@@ -1897,6 +1964,12 @@ class TestQuery:
 class Test_show_network:
     """Test the show_network api cal."""
 
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
+
+
     def test_show_network_simple(self):
         api.project_create('anvil-nextgen')
         network_create_simple('spiderwebs', 'anvil-nextgen')
@@ -1950,6 +2023,12 @@ class TestFancyNetworkCreate:
     The details of these combinations are shown in docs/networks.md
     """
 
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
+
+
     def test_project_network(self):
         """Succesfully create a project-owned network."""
         api.project_create('anvil-nextgen')
@@ -1996,6 +2075,12 @@ class TestFancyNetworkCreate:
 
 class TestDryRun:
     """Test that api calls using functions with @no_dry_run behave reasonably."""
+
+    pytestmark = pytest.mark.usefixtures('configure',
+                                         'fresh_database',
+                                         'server_init',
+                                         'with_request_context')
+
 
     def test_node_power_cycle(self):
         """Check that power-cycle behaves reasonably under @no_dry_run."""
