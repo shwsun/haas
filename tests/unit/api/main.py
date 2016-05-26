@@ -1562,39 +1562,6 @@ class TestQuery_populated_db:
         assert actual == expected
 
     def test_list_network_attachments_for_project(self):
-        api.node_register('node-99', obm={
-		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-		  "host": "ipmihost", 
-		  "user": "root", 
-		  "password": "tapeworm"})
-        api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
-        api.project_create('anvil-nextgen')
-        api.project_connect_node('anvil-nextgen', 'node-99')
-        network_create_simple('hammernet', 'anvil-nextgen')
-        api.node_connect_network('node-99', '99-eth0', 'hammernet')
-        deferred.apply_networking()
-        api.node_register('node-100', obm={
-		  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-		  "host": "ipmihost", 
-		  "user": "root", 
-		  "password": "tapeworm"})
-        api.node_register_nic('node-100', '100-eth0', 'DE:AD:BE:EF:20:14')
-        api.project_create('anvil-oldtimer')
-        api.project_connect_node('anvil-oldtimer', 'node-100')
-        api.network_grant_project_access('anvil-oldtimer', 'hammernet')
-        api.node_connect_network('node-100', '100-eth0', 'hammernet')
-        deferred.apply_networking()
-        
-        actual = json.loads(api.list_network_attachments('hammernet', 'anvil-nextgen'))
-        expected = {
-            'node-99':
-            {
-                'nic': '99-eth0',
-                'channel': get_network_allocator().get_default_channel(),
-                'project': 'anvil-nextgen'
-            },
-        }
-       
         api.node_register_nic('runway_node_0', 'r-eth0', 'DE:AD:BE:EF:20:14')
         api.node_register_nic('manhattan_node_0', 'm-eth0', 'DE:AD:BE:EF:20:14')
         api.node_connect_network('runway_node_0', 'r-eth0', 'manhattan_runway_pxe')
