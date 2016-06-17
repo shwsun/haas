@@ -17,7 +17,7 @@ repositories, as well as the EPEL repository. EPEL can be enabled via::
 
 Then, the rest of the packages can be installed via::
 
-    yum install libvirt bridge-utils ipmitool telnet httpd mod_wsgi python-pip qemu-kvm python-virtinst virt-install python-psycopg2
+    yum install libvirt bridge-utils ipmitool telnet httpd mod_wsgi python-pip qemu-kvm python-virtinst virt-install python-psycopg2 vconfig net-tools
 
 In addition, HaaS depends on a number of python libraries. Many of these are
 available as RPMs as well, but we recommend installing them with pip, since
@@ -64,7 +64,16 @@ now the solution is to disable SELinux::
 
     sudo setenforce 0
 
-Make sure SELinux is also disabled on startup.
+Make sure SELinux is also disabled on startup. To do this [on
+CentOS/RHEL](https://wiki.centos.org/HowTos/SELinux), edit
+`/etc/selinux/config` to change:
+```
+SELINUX=enforcing
+```
+to
+```
+SELINUX=permissive
+```
 
 Create User
 -----------
@@ -86,6 +95,9 @@ important: ``trunk_nic`` must match your choice of trunk NIC in the "Networking
 
 For a detailed description of the configuration needed for various switch
 setups, see ``docs/network-drivers.md``.
+
+Logging level and directory can be set in the ``[general]`` section. For more
+information view ``docs/logging.md``.
 
 The file should be placed at ``/etc/haas.cfg``; The ``haas.wsgi``
 script, described below, requires this. Awkwardly, the ``haas``
