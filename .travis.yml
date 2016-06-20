@@ -3,6 +3,8 @@ branches:
     only:
         - master
         - dogfood
+        - dev
+        - revert_port
 services:
   - postgres
 python:
