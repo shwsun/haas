@@ -61,6 +61,12 @@ class Session(object):
         """
 
     @abstractmethod
+    def revert(self):
+        """Remove all vlans from the port.
+           Allows haas to reset to state in db.
+        """
+
+    @abstractmethod
     def disconnect(self):
         """End the session. Must be at the main prompt."""
 

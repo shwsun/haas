@@ -211,6 +211,19 @@ def user_remove_project(user, project):
     do_post(url, data={'project': project})
 
 @cmd
+def project_add_network(project, network):
+   """Add <network> to <project>"""
+   url = object_url('project', project, 'add_network')
+   do_post(url, data={'network': network})
+
+
+@cmd
+def project_remove_network(project, network):
+   """Remove <network> from <project>"""
+   url = object_url('project', project, 'remove_network')
+   do_post(url, data={'network': network})
+
+@cmd
 def project_create(project):
     """Create a <project>"""
     url = object_url('project', project)
@@ -473,6 +486,12 @@ def list_project_networks(project):
     do_get(url)
 
 @cmd
+def list_networks():
+    """List all networks"""
+    url = object_url('networks')
+    do_get(url)
+
+@cmd
 def show_network(network):
     """Display information about <network>"""
     url = object_url('network', network)
@@ -483,6 +502,18 @@ def show_node(node):
     """Display information about a <node>"""
     url = object_url('node', node)
     do_get(url)
+
+@cmd
+def show_port(port):
+    """Display information about a <port>"""
+    url = object_url('port', port)
+    do_get(url)
+
+@cmd
+def revert_port(port):
+    """Revert <port> to state in HaaS database"""
+    url = object_url('port', port, 'revert')
+    do_post(url)
 
 @cmd
 def list_project_headnodes(project):

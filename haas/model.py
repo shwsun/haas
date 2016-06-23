@@ -36,7 +36,6 @@ import xml.etree.ElementTree
 import logging
 import os
 
-
 db = SQLAlchemy(app)
 
 # without setting this explicitly, we get a warning that this option
@@ -49,6 +48,9 @@ app.config.update(SQLALCHEMY_TRACK_MODIFICATIONS=False)
 def init_db(uri=None):
     """Start up the DB connection.
 
+    If `create` is True, this will generate the schema for the database, and
+    perform initial population of tables.
+
     `uri` is the uri to use for the databse. If it is None, the uri from the
     config file will be used.
     """
@@ -56,6 +58,10 @@ def init_db(uri=None):
         uri = cfg.get('database', 'uri')
     app.config.update(SQLALCHEMY_DATABASE_URI=uri)
 
+# A joining table for networks and projects, which have a many to many relationship:
+network_projects = db.Table('network_projects',
+                    db.Column('project_id', db.ForeignKey('project.id')),
+                    db.Column('network_id', db.ForeignKey('network.id')))
 
 class Nic(db.Model):
     """a nic belonging to a Node"""
@@ -132,10 +138,9 @@ class Network(db.Model):
     # The project that has access to the network, or None if the network is
     # public.  This field determines who can connect a node or headnode to a
     # network.
-    access_id = db.Column(db.ForeignKey('project.id'))
     access    = db.relationship("Project",
-                                backref=db.backref('networks_access'),
-                                foreign_keys=[access_id])
+                             backref=db.backref('networks_access'),
+                             secondary='network_projects')
     # True if network_id was allocated by the driver; False if it was
     # assigned by an administrator.
     allocated = db.Column(db.Boolean)
@@ -258,7 +263,6 @@ class Obm(db.Model):
     __mapper_args__ = {
             'polymorphic_on': type
             }
-
     @staticmethod
     def validate(kwargs):
         """Verify that ``kwargs`` is a legal set of keywords args to ``__init__``
@@ -274,7 +278,7 @@ class Obm(db.Model):
         Exact implementation is left to the subclasses.
         """
         assert False, "Subclasses MUST override the power_cycle method "
-
+    
     def power_off(self):
         """ Shuts off the node.
 

@@ -321,51 +321,64 @@ def initial_db():
         networks = [
             {
                 'creator': None,
-                'access': None,
+                'access': [],
                 'allocated': True,
                 'label': 'stock_int_pub',
             },
             {
                 'creator': None,
-                'access': None,
+                'access': [],
                 'allocated': False,
                 'network_id': 'ext_pub_chan',
                 'label': 'stock_ext_pub',
             },
             {
-                # For some tests, we want things to initial be attached to a
+                # For some tests, we want things to initialyl be attached to a
                 # network. This one serves that purpose; using the others would
                 # interfere with some of the network_delete tests.
                 'creator': None,
-                'access': None,
+                'access': [],
                 'allocated': True,
                 'label': 'pub_default',
             },
             {
                 'creator': runway,
-                'access': runway,
+                'access': [runway],
                 'allocated': True,
                 'label': 'runway_pxe'
             },
             {
                 'creator': None,
-                'access': runway,
+                'access': [runway],
                 'allocated': False,
                 'network_id': 'runway_provider_chan',
                 'label': 'runway_provider',
             },
             {
                 'creator': manhattan,
-                'access': manhattan,
+                'access': [manhattan],
                 'allocated': True,
                 'label': 'manhattan_pxe'
             },
             {
                 'creator': None,
-                'access': manhattan,
+                'access': [manhattan],
                 'allocated': False,
                 'network_id': 'manhattan_provider_chan',
                 'label': 'manhattan_provider',
+            },
+            {
+                'creator': None,
+                'access': [manhattan, runway],
+                'allocated': False,
+                'network_id': 'manhattan_runway_provider_chan',
+                'label': 'manhattan_runway_provider',
+            },
+            {
+                'creator': manhattan,
+                'access': [manhattan, runway],
+                'allocated': True,
+                'label': 'manhattan_runway_pxe',
             },
         ]
 

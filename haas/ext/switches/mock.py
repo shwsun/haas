@@ -69,6 +69,10 @@ class MockSwitch(Switch):
         else:
             state[port][action.channel] = action.new_network.network_id
 
+    def revert(self, port):
+        state = LOCAL_STATE[self.label]
+        state[port].clear()
+
     def disconnect(self):
         pass
 
