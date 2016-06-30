@@ -930,7 +930,7 @@ def revert_port(port):
     nic = model.Nic.query.filter_by(port_id=port.id).first()
 
     if nic is None:
-        return "" 404
+        return '', 404
 
     #delete old entry and create new oned
     nic = _must_find(model.Nic, nic)
