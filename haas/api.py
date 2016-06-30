@@ -868,35 +868,58 @@ def switch_delete_port(switch, port):
     db.session.commit()
 
 
+@rest_call('GET', '/port', Schema({}))
+def list_ports():
+    """List all ports.
+
+    Return a JSON of string contains ports.
+    """
+    get_auth_backend().require_admin()
+    ports = model.Port.query.all()
+    ports = sorted([p.label for p in ports])
+    return json.dumps(ports)
+
+
 @rest_call('GET', '/port/<path:port>', Schema({
     'port': basestring,
 }))
 def show_port(port):
+    """Display nic and switch info related to this port.
+
+    """
     port = _must_find(model.Port, port)
-    attachment = None
-    if port.nic is not None:
-        for a in port.nic.attachments:
-            if a.nic.port.label == port.label:
-                attachment = a
 
     get_auth_backend().require_admin()
+    nic = model.Nic.query.filter_by(port_id=port.id).first()
+
+    attachment = None
+    if nic is not None:
+        nics = _must_find(model.Nic, nic)
+        for a in nics.attachments:
+            if nics.port.label == port.label:
+                attachment = a
+    else:
+        nics = None
+
     result = {
         'name': port.label,
         'switch': port.owner.label,
-        'nic': port.nic.label
+        'nic': nic
     }
 
-    if port.nic is None:
+    if nics is not None:
+        result['nic'] = nics.label
+    if nic is None:
         result['node'] = None
     else:
-        result['node'] = port.nic.owner.label
+        result['node'] = nics.owner.label
 
     if attachment is None:
         result['attachment'] = None
     else:
         result['attachment'] = {'network': attachment.network.label,
                                 'channel': attachment.channel,
-                                }
+        }
 
     return json.dumps(result, sort_keys=True)
 
@@ -906,10 +929,12 @@ def show_port(port):
 def revert_port(port):
     get_auth_backend().require_admin()
     port = _must_find(model.Port, port)
-    nic = port.nic
+    nic = model.Nic.query.filter_by(port_id=port.id).first()
+
     if nic is None:
         return
-    #delete old entry and create new one
+    #delete old entry and create new oned
+    nic = _must_find(model.Nic, nic)
     for a in nic.attachments:
         db.session.query(model.NetworkAttachment)\
                 .filter_by(nic=a.nic, channel=a.channel)\

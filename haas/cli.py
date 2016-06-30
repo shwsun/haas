@@ -386,7 +386,7 @@ def switch_register(switch, subtype, *args):
     eg. haas switch_register mock03 mock mockhost01 mockuser01 mockpass01
 
     FIXME: current design needs to change. CLI should not know about every backend.
-    ideally, this should be taken care of in the driver itself or 
+    ideally, this should be taken care of in the driver itself or
     client library (work-in-progress) should manage it.
     """
     switch_api = "http://schema.massopencloud.org/haas/v0/switches/"
@@ -495,6 +495,12 @@ def list_networks():
 def show_network(network):
     """Display information about <network>"""
     url = object_url('network', network)
+    do_get(url)
+
+@cmd
+def list_ports():
+    """List all ports"""
+    url = object_url('port')
     do_get(url)
 
 @cmd
