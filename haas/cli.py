@@ -500,7 +500,7 @@ def show_network(network):
 @cmd
 def list_ports():
     """List all ports"""
-    url = object_url('port')
+    url = object_url('ports')
     do_get(url)
 
 @cmd

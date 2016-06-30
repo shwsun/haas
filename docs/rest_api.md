@@ -814,6 +814,73 @@ Possible errors:
 * 404, if the port is not attached to a nic
 * 409, if the port is attached to a node which is not free.
 
+
+### list_port
+
+`GET /ports`
+
+Return a list of all ports in HaaS
+
+Response body:
+
+    [
+        "manhattan",
+        "runway",
+        ...
+    ]
+
+Authorization requirements:
+
+* Administrative access.
+
+
+### show_port
+
+`GET /port/<port>`
+
+View detailed information about `<port>`.
+
+The result must contain the following fields:
+
+* "name", the name of the port
+* "switch", the name of the switch owns the port
+
+The result may also contain the following fields:
+
+* "nic", if the nic is connected to this port
+* "node", on which node is this nic
+* "attachment",  description of network attachments
+
+Response body (on success):
+
+    {
+        "name": <port>,
+        "switch": <switch>,
+        "nic": <nic> (Optional)),
+        "node": <node> (Optional),
+        "attachment": <attachment> (Optional)
+    }
+
+Authorization requirements:
+
+* Administrative access.
+
+
+### revert_port
+
+`POST /port/<path:port>/revert`
+
+Revert `<port>` to reinstate network attachments.
+
+Authorization requirements:
+
+* Administrative access.
+
+Possible errors:
+
+* 404, if the port is not attached to a nic
+
+
 # API Extensions
 
 API calls provided by specific extensions. They may not exist in all
@@ -883,4 +950,3 @@ Remove a user from a project.
 Authorization requirements:
 
 * Administrative access.
-

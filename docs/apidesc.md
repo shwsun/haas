@@ -69,6 +69,8 @@ one exception is NICs, where the label is unique only on a per-node basis.
     node_connect_network        <node_label> <nic_label> <network_label>
     node_detach_network         <node_label> <nic_label>
 
+    revert_port                 <port_label>
+
     # Headnode operations
 
     headnode_create             <hn_label> <project_label>
@@ -101,7 +103,7 @@ one exception is NICs, where the label is unique only on a per-node basis.
     show_node                  <node>
     show_headnode              <headnode>
     show_network               <network>
-
+    show_port                  <port>
 
 ## Authorization-related operations:
 

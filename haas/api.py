@@ -868,7 +868,7 @@ def switch_delete_port(switch, port):
     db.session.commit()
 
 
-@rest_call('GET', '/port', Schema({}))
+@rest_call('GET', '/ports', Schema({}))
 def list_ports():
     """List all ports.
 
@@ -886,33 +886,27 @@ def list_ports():
 def show_port(port):
     """Display nic and switch info related to this port.
 
+    If no nic or other network attachments, nic will be None.
     """
     port = _must_find(model.Port, port)
 
     get_auth_backend().require_admin()
     nic = model.Nic.query.filter_by(port_id=port.id).first()
 
-    attachment = None
-    if nic is not None:
-        nics = _must_find(model.Nic, nic)
-        for a in nics.attachments:
-            if nics.port.label == port.label:
-                attachment = a
-    else:
-        nics = None
-
     result = {
         'name': port.label,
         'switch': port.owner.label,
-        'nic': nic
+        #'nic': None
     }
 
-    if nics is not None:
+    attachment = None
+    if nic is not None:
+        nics = _must_find(model.Nic, nic)
         result['nic'] = nics.label
-    if nic is None:
-        result['node'] = None
-    else:
         result['node'] = nics.owner.label
+        for a in nics.attachments:
+            if nics.port.label == port.label:
+                attachment = a
 
     if attachment is None:
         result['attachment'] = None
@@ -927,12 +921,17 @@ def show_port(port):
     'port': basestring,
 }))
 def revert_port(port):
+    """Revert port to reinstate network attachments.
+
+    If there is no nic connected to the port, return.
+    """
     get_auth_backend().require_admin()
     port = _must_find(model.Port, port)
     nic = model.Nic.query.filter_by(port_id=port.id).first()
 
     if nic is None:
-        return
+        return "" 404
+
     #delete old entry and create new oned
     nic = _must_find(model.Nic, nic)
     for a in nic.attachments:
