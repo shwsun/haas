@@ -889,6 +889,7 @@ def show_port(port):
     If no nic or other network attachments, nic will be None.
     """
     port = _must_find(model.Port, port)
+    switch = port.owner
 
     get_auth_backend().require_admin()
     nic = model.Nic.query.filter_by(port_id=port.id).first()
@@ -896,7 +897,8 @@ def show_port(port):
     result = {
         'name': port.label,
         'switch': port.owner.label,
-        #'nic': None
+        'nic': nic,
+        #'niclist': nic
     }
 
     attachment = None
