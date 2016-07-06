@@ -889,25 +889,28 @@ def show_port(port):
     If no nic or other network attachments, nic will be None.
     """
     port = _must_find(model.Port, port)
-    switch = port.owner
 
     get_auth_backend().require_admin()
-    nic = model.Nic.query.filter_by(port_id=port.id).first()
+    nic = model.Nic.query.filter(model.Nic.port_id == port.id).first()
 
     result = {
         'name': port.label,
         'switch': port.owner.label,
-        'nic': nic,
-        #'niclist': nic
+        'nic': nic.label,
+        #'niclist': niclist
+        #'node': node,
+        #'nics': nics
     }
 
     attachment = None
     if nic is not None:
-        nics = _must_find(model.Nic, nic)
-        result['nic'] = nics.label
-        result['node'] = nics.owner.label
-        for a in nics.attachments:
-            if nics.port.label == port.label:
+        #nic = _must_find_n(node, model.Nic, nic)
+        #node = _must_find(model.Node, "sun-20")
+        #nics = _must_find(model.Nic, nic)
+        #result['nic'] = nic.label
+        result['node'] = nic.owner.label
+        for a in nic.attachments:
+            if nic.port.label == port.label:
                 attachment = a
 
     if attachment is None:
@@ -929,13 +932,13 @@ def revert_port(port):
     """
     get_auth_backend().require_admin()
     port = _must_find(model.Port, port)
-    nic = model.Nic.query.filter_by(port_id=port.id).first()
+    nic = model.Nic.query.filter(model.Nic.port_id == port.id).first()
 
     if nic is None:
         return '', 404
 
     #delete old entry and create new oned
-    nic = _must_find(model.Nic, nic)
+    nic = _must_find(model.Nic, nic.label)
     for a in nic.attachments:
         db.session.query(model.NetworkAttachment)\
                 .filter_by(nic=a.nic, channel=a.channel)\

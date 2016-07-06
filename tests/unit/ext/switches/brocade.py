@@ -112,17 +112,14 @@ INTERFACE3 = '104/0/20'
 
 class TestBrocade(object):
     """ Unit tests for the Brocade driver.
-
     The tests use the requests_mock library to return prerecorded responses
     from the switch (without any actual communication with the switch
     happening during the tests), or check that the correct payload was sent
     to the switch, at the right url.
-
     Inside the `requests_mock.mock()` context, every call made with the requests
     library will be directed to the mock object. We then register the urls
     we want to mock, and what to return when they are requested. An exception
     will be thrown if a request goes to a non-registered url.
-
     Example below will return the PRERECORDER_RESPONSE string.
     ```
     with requests_mock.mock() as mock:
@@ -157,7 +154,7 @@ class TestBrocade(object):
     @pytest.fixture
     def network(self):
         project = model.Project('anvil-nextgen')
-        return model.Network(project, project, True, '102', 'hammernet')
+        return model.Network(project, [project], True, '102', 'hammernet')
 
     def test_get_port_networks(self, switch):
         with requests_mock.mock() as mock:
