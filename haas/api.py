@@ -168,18 +168,16 @@ def network_revoke_project_access(project, network):
     If the project or network does not exist, a NotFoundError will be raised.
     If the project is the owner of the network a BlockedError will be raised.
     """
+    auth_backend = get_auth_backend()
     network = _must_find(model.Network, network)
     project = _must_find(model.Project, project)
     #must be admin, the owner of the network, or <project> to remove <project>.
-    authorized = get_auth_backend().have_project_access(network.owner)
     
     if network.access:
-        for proj in network.access:
-            authorized = authorized or ((proj.label == project.label) and 
-                                        get_auth_backend().have_project_access(proj))
-            
-    if not authorized:
-        raise AuthorizationError("You are not authorized to remove the specified project form this network.")
+        if not (auth_backend.have_admin() or \
+           (network.owner is not None and auth_backend.have_project_access(network.owner)) or \
+           (project in network.access and auth_backend.have_project_access(project))):            
+            raise AuthorizationError("You are not authorized to remove the specified project form this network.")
    
     if project not in network.access:
         raise NotFoundError("Network %r is not in project %r"%
@@ -192,6 +190,7 @@ def network_revoke_project_access(project, network):
     for attachment in network.attachments:
         if attachment.nic.owner.project.label == project.label:
             raise BlockedError("Project still has node(s) attached to the network")
+
 
     for hnic in network.hnics:
         if hnic.owner.project.label == project.label:
