@@ -420,7 +420,7 @@ def headnode_create(headnode, project, base_img):
 
     If the project does not exist, a NotFoundError will be raised.
 
-    If the base image does not exist (not specified in haas.cfg) a
+    If the base image does not exist (is not specified in haas.cfg) a
     BadArgumentError will be raised.
     """
 
