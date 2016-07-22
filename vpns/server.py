@@ -16,14 +16,26 @@ def init_endpoints():
             ep.findOwner()
             Endpoints.append(ep)
 
+            if ep.node != 'NONE':
+                for node in Nodes:
+                    if node.key == ep.node:
+                        logging.info('found in use node %s, net %s' 
+                                     % (ep.node, ep.network))
+                        ep.nic, ep.channel = node.find_network(ep.network)
+                        break
+
 def init_nodes():
-    pass
-    
+    project_nodes = vpn_project_nodes()
+    for n in project_nodes:
+        node = VpnNode(n)
+        register_nics(node)
+        Nodes.append(node)
+
 def init():
     """Set up the api server's internal state.
 
     This is a convenience wrapper that calls the other setup routines in
     this module in the correct order
     """
-    init_endpoints()
     init_nodes()
+    init_endpoints()

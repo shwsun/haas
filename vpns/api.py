@@ -23,7 +23,7 @@ import logging
 from schema import Schema, Optional
 
 from vpns.endpoint import *
-from vpns.hilclient import node_connect_network, node_detach_network
+from vpns.hilclient import node_connect_network, node_detach_network, show_network
 
 from haas.auth import get_auth_backend
 from haas.rest import rest_call
@@ -45,8 +45,12 @@ def list_vpns():
                 {"project" : "myproj", "network" : "mynet"}]'
     """
     get_auth_backend().require_admin()
-    vpns = [{'project' : ep.key, 'network' : ep.network}
-            for ep in Endpoints]
+    vpns = [{'id' : ep.key,
+             'project' : ep.project,
+             'network' : ep.network,
+             'node'    : ep.node,
+             'nic'     : ep.nic
+            } for ep in Endpoints]
     return json.dumps(vpns)
 
 
@@ -59,8 +63,8 @@ def vpn_create(project, network):
     """
     get_auth_backend().require_admin()
     _assert_absent(project, network)
-    ep = VpnEndpoint(project, network)
-    Endpoints.append(ep)
+
+    ep = find_unused_endpoint()
 
     if not Nodes:
         allocate_node()
@@ -68,6 +72,7 @@ def vpn_create(project, network):
     # find a free nic
     nic = None
     for node in Nodes:
+        node.show_nics()
         nic = node.allocate_nic()
         if nic is not None:
             break
@@ -76,20 +81,23 @@ def vpn_create(project, network):
         raise AllocationError("No free NICs.")
 
     response = show_network(network)
-    if rc.status_code < 200 or rc.status_code >= 300:
-        logging.warn("show_network failed: %d" % rc.status_code)
+    if response.status_code < 200 or response.status_code >= 300:
+        logging.warn("show_network failed: %d" % response.status_code)
         return response.text, response.status_code
 
     properties = json.loads(response.text)
     channels = properties['channels']
 
-    ep.node = node
-    ep.nic  = nic
+    ep.allocate(project, node.key, network, nic, channels[0])
+
     response = node_connect_network(node.key, nic, network, channels[0])
-    if response.status_code < 200 or resonse.status_code >= 300:
+    if response.status_code < 200 or response.status_code >= 300:
         logging.warn("node_connect_network failed: %d" % response.status_code)
+        ep.release()
+        node.release_nic(nic)
         return response.text, response.status_code
 
+    ep.claim()
     return '', 202
 
     
@@ -114,51 +122,33 @@ def get_vpn_certificates(project, network):
 
 @rest_call('DELETE', '/vpn/<project>', Schema({'project': basestring,
                                                'network': basestring}))
-def vpn_delete(project, network):
-    """Delete project.
+def vpn_destroy(project, network):
+    """Delete endpoint associated with <project,network>
 
     If the project does not exist, a NotFoundError will be raised.
     """
     get_auth_backend().require_admin()
     ep = _must_find(project, network)
 
+    logging.info("detaching node " + ep.node + " nic " + ep.nic)
     node_detach_network(ep.node, ep.nic, network)
-    Endpoints.remove(ep)
 
+    for node in Nodes:
+        if node.key == ep.node:
+            node.release_nic(ep.nic)
+            break
 
-@rest_call('PUT', '/node/<node>', Schema({'node': basestring}))
-def node_register(node):
-    """Register a node for use as a VPN endpoint
+    ep.unclaim()
 
-    If the node is already registered, a DuplicateError will be raised.
-    """
-    get_auth_backend().require_admin()
-    for n in Nodes:
-        if n.name == node:
-            raise DuplicateError(node)
-    # add the host to the list of nodes
-    Nodes.append(VpnNode(node))
-
-@rest_call('PUT', '/node/<node>/nic/<nic>', Schema({'node': basestring,
-                                                  'nic': basestring}))
-def node_register_nic(node, nic):
-    """Register a nic on node
-
-    If the node is not registered, a NotFoundError is raised.
-    If the nic is already registered, a DuplicateError will be raised.
-    """
-    get_auth_backend().require_admin()
-    host = _find_node(node)
-    host.register_nic(nic)
 
 def _assert_absent(project, network):
     for ep in Endpoints:
-        if project==ep.key and network==ep.network:
+        if project==ep.project and network==ep.network:
             raise DuplicateError(network)
             
 def _must_find(project, network):
     for ep in Endpoints:
-        if project==ep.key and network==ep.network:
+        if project==ep.project and network==ep.network:
             return ep
 
     raise NotFoundError("No VPN for project %s network %s." 

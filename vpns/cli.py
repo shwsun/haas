@@ -143,7 +143,7 @@ def vpn_create(project, network):
     sys.stderr.write('text: %s\n' % response.text)
 
 @cmd
-def vpn_delete(project, network):
+def vpn_destroy(project, network):
     """Delete vpn for <project, network>"""
     url = object_url('vpn', project)
     check_status_code(do_delete(url, data={'network' : network}))
