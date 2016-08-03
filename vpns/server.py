@@ -37,5 +37,9 @@ def init():
     This is a convenience wrapper that calls the other setup routines in
     this module in the correct order
     """
+    if os.geteuid() != 0:
+        raise IllegalStateError("Must run as root")
+        return
+
     init_nodes()
     init_endpoints()

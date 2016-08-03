@@ -39,6 +39,7 @@ class VpnEndpoint:
         self.network = 'NONE'
         self.channel = -1
         self.node = 'NONE'
+        self.clientid = 1
         self.nic  = None
 
     def getwd(self):
@@ -68,7 +69,7 @@ class VpnEndpoint:
             with open(os.path.join(certdir, 'ca.crt')) as f:
                 certs['ca_crt'] = f.read()
 
-            clientbase = 'client' + str(clientid)
+            clientbase = 'client' + str(self.clientid)
             with open(os.path.join(certdir, clientbase + '.crt')) as f:
                 certs['client_crt'] = f.read()
 
@@ -90,11 +91,12 @@ class VpnEndpoint:
                                          "endpoint is already claimed for node "
                                          + owner['node'])
 
-                f.truncate(0)
+                f.seek(0)
                 owner = { 'project' : self.project, 
                           'node' : self.node, 
                           'network' : self.network }
                 f.write(json.dumps(owner))
+                f.truncate()
         except:
             raise
 
@@ -107,11 +109,13 @@ class VpnEndpoint:
                 if owner['node'] != self.node:
                     raise ProjectMismatchError("not endpoint owner!")
 
-                f.truncate(0)
+                f.seek(0)
                 owner = { 'project' : 'NONE',
                           'node' : 'NONE',
                           'network' : 'NONE' }
                 f.write(json.dumps(owner))
+                f.truncate()
+
                 self.allocate('NONE', 'NONE', 'NONE', 'NONE', 'NONE') 
         except:
             raise

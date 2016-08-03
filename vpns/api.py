@@ -90,14 +90,16 @@ def vpn_create(project, network):
 
     ep.allocate(project, node.key, network, nic, channels[0])
 
+    ep.claim()
+
     response = node_connect_network(node.key, nic, network, channels[0])
     if response.status_code < 200 or response.status_code >= 300:
         logging.warn("node_connect_network failed: %d" % response.status_code)
         ep.release()
+        ep.unclaim()
         node.release_nic(nic)
         return response.text, response.status_code
 
-    ep.claim()
     return '', 202
 
     
