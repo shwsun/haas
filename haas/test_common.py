@@ -299,7 +299,24 @@ def additional_db():
     initial_db()
     manhattan = db.session.query(Project).filter_by(label="manhattan").one()
     runway = db.session.query(Project).filter_by(label="runway").one()
+    switch = db.session.query(Switch).filter_by(label="stock_switch_0").one()
+
     with app.app_context():
+        for node_label in ['runway_node_0', 'runway_node_1',
+                           'manhattan_node_0', 'manhattan_node_1']:
+
+            node = db.session.query(Node).filter_by(label=node_label).one()
+            nic = db.session.query(Nic).filter_by(owner=node, label='boot-nic').one()
+
+            port = Port('connected_port_0', switch)
+            port.nic = nic
+            nic.port = port
+
+            db.session.add(node)
+
+        db.session.add(switch)
+
+
         networks=[
             {
                 'creator': None,
@@ -322,35 +339,6 @@ def additional_db():
                     get_network_allocator().get_new_network_id()
             db.session.add(Network(**net))
         db.session.commit()
-
-def additional_db():
-    """ Populated database with additional objects needed for testing.
-
-    The database setup in initial_db is required to remain static as
-    a starting point for database migrations so any changes needed for
-    testing should be made in additional_db.
-    """
-
-    initial_db()
-
-    switch = db.session.query(Switch).filter_by(label="stock_switch_0").one()
-
-    with app.app_context():
-        for node_label in ['runway_node_0', 'runway_node_1',
-                           'manhattan_node_0', 'manhattan_node_1']:
-
-            node = db.session.query(Node).filter_by(label=node_label).one()
-            nic = db.session.query(Nic).filter_by(owner=node, label='boot-nic').one()
-
-            port = Port('connected_port_0', switch)
-            port.nic = nic
-            nic.port = port
-
-            db.session.add(node)
-
-        db.session.add(switch)
-        db.session.commit()
-
 
 def initial_db():
     """Populates the database with a useful set of objects.
