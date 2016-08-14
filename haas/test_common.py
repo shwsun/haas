@@ -291,7 +291,7 @@ def additional_db():
     specifically for the addition of Network ACLs which require a many
     to many project network relationship.
 
-    the database setup in initial_db is required to remain static as 
+    the database setup in initial_db is required to remain static as
     a starting point for database migrations so any changes needed for
     testing should be made in additional_db
     """
@@ -300,16 +300,16 @@ def additional_db():
     manhattan = db.session.query(Project).filter_by(label="manhattan").one()
     runway = db.session.query(Project).filter_by(label="runway").one()
     with app.app_context():
-        networks=[ 
+        networks=[
             {
-                'owner': None,
+                'creator': None,
                 'access': [manhattan, runway],
                 'allocated': False,
                 'network_id': 'manhattan_runway_provider_chan',
                 'label': 'manhattan_runway_provider',
             },
             {
-                'owner': manhattan,
+                'creator': manhattan,
                 'access': [manhattan, runway],
                 'allocated': True,
                 'label': 'manhattan_runway_pxe',
@@ -329,7 +329,7 @@ def initial_db():
     This allows us to avoid some boilerplate in tests which need a few objects
     in the database in order to work.
 
-    Is static to allow database migrations to be tested, if new objects need 
+    Is static to allow database migrations to be tested, if new objects need
     to be added they should be included in additional_db not initial_db.
 
     Note that this fixture requires the use of the following extensions:
@@ -359,13 +359,13 @@ def initial_db():
 
         networks = [
             {
-                'owner': None,
+                'creator': None,
                 'access': [],
                 'allocated': True,
                 'label': 'stock_int_pub',
             },
             {
-                'owner': None,
+                'creator': None,
                 'access': [],
                 'allocated': False,
                 'network_id': 'ext_pub_chan',
@@ -375,32 +375,32 @@ def initial_db():
                 # For some tests, we want things to initially be attached to a
                 # network. This one serves that purpose; using the others would
                 # interfere with some of the network_delete tests.
-                'owner': None,
+                'creator': None,
                 'access': [],
                 'allocated': True,
                 'label': 'pub_default',
             },
             {
-                'owner': runway,
+                'creator': runway,
                 'access': [runway],
                 'allocated': True,
                 'label': 'runway_pxe'
             },
             {
-                'owner': None,
+                'creator': None,
                 'access': [runway],
                 'allocated': False,
                 'network_id': 'runway_provider_chan',
                 'label': 'runway_provider',
             },
             {
-                'owner': manhattan,
+                'creator': manhattan,
                 'access': [manhattan],
                 'allocated': True,
                 'label': 'manhattan_pxe'
             },
             {
-                'owner': None,
+                'creator': None,
                 'access': [manhattan],
                 'allocated': False,
                 'network_id': 'manhattan_provider_chan',
