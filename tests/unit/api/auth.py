@@ -53,6 +53,7 @@ def auth_call_test(fn, error, admin, project, args, kwargs={}):
 
 additional_db = pytest.fixture(additional_db)
 
+
 @pytest.fixture
 def configure():
     config_testsuite()
@@ -244,8 +245,8 @@ for (project, net) in [
         args=[project, net]
     ))
 
-### project that is the owner of the network should 
-### be able to add access for other projects 
+### project that is the owner of the network should
+### be able to add access for other projects
 for (project, project_access, net) in [
     ('manhattan', 'runway', 'manhattan_pxe'),
     ('runway', 'manhattan', 'runway_pxe'),
@@ -296,8 +297,8 @@ for (project, net) in [
         args=[project, net]
     ))
 
-### project that is the owner of the network should 
-### be able to remove the access of other projects 
+### project that is the owner of the network should
+### be able to remove the access of other projects
 ### projects should be able to remove their own access
 for (project, project_access, net) in [
     ('manhattan', 'runway', 'manhattan_runway_pxe'),
@@ -333,7 +334,7 @@ for (project, project_access, net) in [
 
 ## Legal cases
 
-### Admin should be able to list attachments for public network: 
+### Admin should be able to list attachments for public network:
 for net in ('stock_int_pub', 'stock_ext_pub'):
     for project in ('runway', 'manhattan'):
             auth_call_params.append(dict(
@@ -380,7 +381,7 @@ for (project, net) in [
 
 ## Illegal cases
 
-### Projects should not be able to list nodes that do not belong to them 
+### Projects should not be able to list nodes that do not belong to them
 ### (on network they do not own)
 for (project, access_project, net) in [
     ('runway', 'manhattan', 'manhattan_runway_pxe'),
