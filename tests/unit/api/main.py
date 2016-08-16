@@ -41,7 +41,7 @@ def configure():
 
 
 fresh_database = pytest.fixture(fresh_database)
-
+additional_database = pytest.fixture(additional_db)
 
 @pytest.fixture
 def server_init():
@@ -64,11 +64,18 @@ def switchinit():
                         username="switch_user",
                         password="switch_pass",
                         hostname="switchname")
+    api.switch_register_port('sw0', '2')
     api.switch_register_port('sw0', '3')
-
 
 class TestProjectCreateDelete:
     """Tests for the haas.api.project_* functions."""
+
+    pytestmark = pytest.mark.usefixtures('configure' ,
+                                         'fresh_database' ,
+                                         'additional_database' ,
+                                         'server_init' ,
+                                         'with_request_context')
+
 
     def test_project_create_success(self):
         api.project_create('anvil-nextgen')
@@ -141,6 +148,41 @@ class TestProjectCreateDelete:
         with pytest.raises(api.DuplicateError):
             api.project_create('acme-corp')
 
+class TestProjectAddDeleteNetwork:
+    """Tests for adding and deleting a network from a project"""
+
+    pytestmark = pytest.mark.usefixtures('configure' ,
+                                         'fresh_database' ,
+                                         'additional_database' ,
+                                         'server_init' ,
+                                         'with_request_context')
+
+    def test_network_grant_project_access(self):
+        api.network_grant_project_access('manhattan', 'runway_pxe')
+        network = api._must_find(model.Network, 'runway_pxe')
+        project = api._must_find(model.Project, 'manhattan')
+        assert project in network.access
+        assert network in project.networks_access
+
+    def test_network_revoke_project_access(self):
+        api.network_revoke_project_access('runway', 'runway_provider')
+        network = api._must_find(model.Network, 'runway_provider')
+        project = api._must_find(model.Project, 'runway')
+        assert project not in network.access
+        assert network not in project.networks_access
+
+    def test_network_revoke_project_access_connected_node(self, switchinit):
+        api.node_register_nic('runway_node_0', 'eth0', 'DE:AD:BE:EF:20:14')
+        api.port_connect_nic('sw0', '3', 'runway_node_0', 'eth0')
+        api.node_connect_network('runway_node_0', 'eth0', 'runway_provider')
+        deferred.apply_networking()
+
+        with pytest.raises(api.BlockedError):
+            api.network_revoke_project_access('runway', 'runway_provider')
+
+    def test_project_remove_network_owner(self):
+        with pytest.raises(api.BlockedError):
+            api.network_revoke_project_access('runway', 'runway_pxe')
 
 class TestNetworking:
 
@@ -1207,11 +1249,11 @@ class TestNetworkCreateDelete:
 
 
 class Test_switch_register:
-
+    #shwsun
     def test_basic(self):
         """Calling switch_register should create an object in the db."""
         api.switch_register('sw0', type=MOCK_SWITCH_TYPE,
-                username="switch_user", password="switch_pass", hostname="switchname")
+                            username="switch_user", password="switch_pass", hostname="switchname")
         assert model.Switch.query.one().label == 'sw0'
 
     def test_duplicate(self):
@@ -1434,8 +1476,80 @@ class TestPortConnectDetachNic:
             api.port_detach_nic('sw0', '3')
 
 
-class TestQuery:
-    """test the query api"""
+class TestQuery_populated_db:
+    """test portions of the query api with a populated database"""
+
+    pytestmark = pytest.mark.usefixtures('configure' ,
+                                         'fresh_database' ,
+                                         'additional_database' ,
+                                         'server_init' ,
+                                         'with_request_context')
+
+
+    def test_list_networks(self):
+        result = json.loads(api.list_networks())
+        for net in result.keys():
+            del result[net]['network_id']
+        assert result == {
+            'manhattan_provider': {'projects':['manhattan']},
+            'manhattan_pxe': {'projects':['manhattan']},
+            'manhattan_runway_provider': {'projects':['manhattan', 'runway']},
+            'manhattan_runway_pxe': {'projects':['manhattan', 'runway']},
+            'pub_default': {'projects':None},
+            'runway_provider': {'projects':['runway']},
+            'runway_pxe': {'projects':['runway']},
+            'stock_ext_pub': {'projects': None},
+            'stock_int_pub': {'projects': None},
+        }
+
+    def test_list_network_attachments(self, switchinit):
+        api.node_register_nic('runway_node_0', 'r-eth0', 'DE:AD:BE:EF:20:14')
+        api.node_register_nic('manhattan_node_0', 'm-eth0', 'DE:AD:BE:EF:20:14')
+        api.port_connect_nic('sw0', '2','runway_node_0', 'r-eth0')
+        api.port_connect_nic('sw0', '3','manhattan_node_0', 'm-eth0')
+        api.node_connect_network('runway_node_0', 'r-eth0', 'manhattan_runway_pxe')
+        api.node_connect_network('manhattan_node_0', 'm-eth0', 'manhattan_runway_pxe')
+        deferred.apply_networking()
+
+        actual = json.loads(api.list_network_attachments('manhattan_runway_pxe'))
+        expected = {
+            'manhattan_node_0':
+                {
+                    'nic': 'm-eth0',
+                    'channel': get_network_allocator().get_default_channel(),
+                    'project': 'manhattan'
+                },
+            'runway_node_0':
+                {
+                    'nic': 'r-eth0',
+                    'channel': get_network_allocator().get_default_channel(),
+                    'project': 'runway'
+                }
+            }
+        assert actual == expected
+
+    def test_list_network_attachments_for_project(self, switchinit):
+        api.node_register_nic('runway_node_0', 'r-eth0', 'DE:AD:BE:EF:20:14')
+        api.node_register_nic('manhattan_node_0', 'm-eth0', 'DE:AD:BE:EF:20:14')
+        api.port_connect_nic('sw0', '2','runway_node_0', 'r-eth0')
+        api.port_connect_nic('sw0', '3','manhattan_node_0', 'm-eth0')
+        api.node_connect_network('runway_node_0', 'r-eth0', 'manhattan_runway_pxe')
+        api.node_connect_network('manhattan_node_0', 'm-eth0', 'manhattan_runway_pxe')
+        deferred.apply_networking()
+
+        actual = json.loads(api.list_network_attachments('manhattan_runway_pxe', 'runway'))
+        expected = {
+            'runway_node_0':
+                {
+                    'nic': 'r-eth0',
+                    'channel': get_network_allocator().get_default_channel(),
+                    'project': 'runway'
+                }
+            }
+        assert actual == expected
+
+class TestQuery_unpopulated_db:
+    """test portions of the query api with a fresh database"""
 
     def _compare_node_dumps(self, actual, expected):
         """This is a helper method which compares the parsed json output of
@@ -1480,6 +1594,9 @@ class TestQuery:
             'master-control-program',
             'robocop',
         ]
+
+    def test_list_networks_none(self):
+        assert json.loads(api.list_networks()) == {}
 
     def test_list_projects(self):
         assert json.loads(api.list_projects()) == []
