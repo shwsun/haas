@@ -22,7 +22,7 @@ branches:
   only:
     - master
     - dogfood
-    - acl_extra
+    - acl_test
 env:
   - DB=sqlite
   - DB=postgres
