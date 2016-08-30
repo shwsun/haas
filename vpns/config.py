@@ -25,7 +25,8 @@ import importlib
 import os
 import sys
 
-def configure_logging(log_level = "INFO"):
+
+def configure_logging(log_level="INFO"):
     """Configure the logger according to the log_level argument
     """
     LOG_SET = ["CRITICAL", "DEBUG", "ERROR", "FATAL", "INFO", "WARN", "WARNING"]
@@ -42,6 +43,7 @@ def configure_logging(log_level = "INFO"):
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logging._defaultFormatter = formatter
+
 
 def load_extensions():
     """Load extensions.

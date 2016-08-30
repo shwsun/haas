@@ -18,9 +18,11 @@ from haas.errors import *
 from vpns.hilclient import list_project_nodes, show_node
 
 import os
+import sys
 from os.path import expanduser
 
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +30,10 @@ VpnProject = 'VPN_project'
 Endpoints = []
 Nodes = []
 
+
 class VpnEndpoint:
+    """VpnEndpoint is the base of each and every vpn process.
+    """
     cert_path = '/etc/openvpn/'
     cert_base = 'certs'
     lock_file = 'lock'
@@ -37,10 +42,10 @@ class VpnEndpoint:
         self.key = id
         self.project = 'NONE'
         self.network = 'NONE'
-        self.channel = -1
+        self.channel = 'NONE'
         self.node = 'NONE'
         self.clientid = 1
-        self.nic  = None
+        self.nic = None
 
     def getwd(self):
         return os.path.join(self.cert_path,
@@ -50,9 +55,9 @@ class VpnEndpoint:
         self.project = proj
         self.node = node
         self.network = net
-        self.nic  = nic
+        self.nic = nic
         self.channel = channel
-        
+
     def release(self):
         self.node = 'NONE'
         self.network = 'NONE'
@@ -76,7 +81,7 @@ class VpnEndpoint:
             with open(os.path.join(certdir, clientbase + '.key')) as f:
                 certs['client_key'] = f.read()
         except:
-            raise
+            raise NotFoundError("Cert not found.")
 
         return certs
 
@@ -88,17 +93,21 @@ class VpnEndpoint:
                 owner = json.loads(rawdata)
                 if owner['node'] != 'NONE':
                     raise ProjectMismatchError(
-                                         "endpoint is already claimed for node "
-                                         + owner['node'])
+                        "endpoint is already claimed for node "
+                        + owner['node'])
 
                 f.seek(0)
-                owner = { 'project' : self.project, 
-                          'node' : self.node, 
-                          'network' : self.network }
+                owner = {'project': self.project,
+                         'node': self.node,
+                         'nic': self.nic,
+                         'network': {
+                             'name': self.network,
+                             'channel': self.channel
+                         }}
                 f.write(json.dumps(owner))
                 f.truncate()
         except:
-            raise
+            raise ServerError("")
 
     def unclaim(self):
         certdir = self.getwd()
@@ -110,17 +119,21 @@ class VpnEndpoint:
                     raise ProjectMismatchError("not endpoint owner!")
 
                 f.seek(0)
-                owner = { 'project' : 'NONE',
-                          'node' : 'NONE',
-                          'network' : 'NONE' }
+                owner = {'project': 'NONE',
+                         'node': 'NONE',
+                         'network':{
+                             'name': 'NONE',
+                             'channel': 'NONE'
+                         }}
                 f.write(json.dumps(owner))
                 f.truncate()
 
-                self.allocate('NONE', 'NONE', 'NONE', 'NONE', 'NONE') 
+                self.allocate('NONE', 'NONE', 'NONE', 'NONE', 'NONE')
         except:
-            raise
-        
-    def findOwner(self):
+            raise ServerError("")
+
+
+def findOwner(self):
         certdir = self.getwd()
         try:
             with open(os.path.join(certdir, self.lock_file), 'r') as f:
@@ -129,8 +142,10 @@ class VpnEndpoint:
                 self.project = owner['project']
                 self.node = owner['node']
                 self.network = owner['network']
+                self.channel = owner['channel']
         except:
-            raise
+            raise ServerError("")
+
 
 def find_unused_endpoint():
     """ Finds an unclaimed endpoint."""
@@ -161,6 +176,7 @@ def store_certificates(certs):
     except OSError as e:
             sys.stderr.write("Can't write file %s: %s\n" % certdir, str(e))
 
+
 class VpnNic:
     def __init__(self, name, nets):
         self.key = name
@@ -186,9 +202,9 @@ class VpnNode:
         """ return nic name and channel for network """
         for nic in self.used_nics:
             for chan, nw in nic.networks.iteritems():
-                logging.info('find network: %s %s' % (chan, nw))
+                logging.info('find network: %s, channel: %s' % (nw, chan))
                 if nw == net:
-                   return nic.key, chan 
+                    return nic.key, chan
         return 'NONE', 'NONE'
 
     def register_nic(self, nic, networks):
@@ -223,7 +239,8 @@ class VpnNode:
         logging.info("free nics:")
         for n in self.free_nics:
             logging.info("fnic: " + n.key)
-        
+
+
 def vpn_project_nodes():
     """ select an unused node off the vpn project list """
     global VpnProject
@@ -239,6 +256,7 @@ def vpn_project_nodes():
     project_nodes = json.loads(response.text)
     return project_nodes
 
+
 def allocate_node():
     """ Look for an unused/new node in the project pool. By "new" we mean
     a node not in the local list of Nodes. This is likely a node that has
@@ -252,14 +270,15 @@ def allocate_node():
         for n in Nodes:
             if n.key == pn:
                 already_have_it = True
-                break # from inner for
+                break  # from inner for
         if not already_have_it:
-            break # from outer for
+            break  # from outer for
 
     if not already_have_it:
         node = VpnNode(pn)
         register_nics(node)
         Nodes.append(node)
+
 
 def register_nics(node):
     """ register all the nics on the given node """
@@ -270,7 +289,8 @@ def register_nics(node):
     details = json.loads(response.text)
     for nic in details['nics']:
         try:
-            logging.info('register nic %s %r\n' % (nic['label'], nic['networks']))
+            logging.info('register nic %s %r\n' % (nic['label'],
+                                                   nic['networks']))
             node.register_nic(nic['label'], nic['networks'])
         except Exception as e:
             logging.error(str(e))

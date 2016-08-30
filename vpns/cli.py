@@ -31,6 +31,7 @@ usage_dict = {}
 MIN_PORT_NUMBER = 1
 MAX_PORT_NUMBER = 2**16 - 1
 
+
 def cmd(f):
     """A decorator for CLI commands.
 
@@ -48,6 +49,7 @@ def cmd(f):
             sys.stderr.write('Invalid arguements.  Usage:\n')
             help(f.__name__)
     command_dict[f.__name__] = wrapped
+
     def get_usage(f):
         args, varargs, _, _ = inspect.getargspec(f)
         showee = [f.__name__] + ['<%s>' % name for name in args]
@@ -67,6 +69,7 @@ def check_status_code(response):
     else:
         sys.stdout.write(response.text + "\n")
 
+
 # TODO: This function's name is no longer very accurate.  As soon as it is
 # safe, we should change it to something more generic.
 def object_url(*args):
@@ -76,6 +79,7 @@ def object_url(*args):
     for arg in args:
         url += '/' + urllib.quote(arg,'')
     return url
+
 
 def do_request(fn, url, data={}):
     """Helper function for making HTTP requests against the API.
@@ -98,26 +102,31 @@ def do_request(fn, url, data={}):
         kwargs['auth'] = (username, password)
     return fn(url, data=data, **kwargs)
 
+
 def do_put(url, data={}):
     return do_request(requests.put, url, data=json.dumps(data))
+
 
 def do_post(url, data={}):
     return do_request(requests.post, url, data=json.dumps(data))
 
+
 def do_get(url, data={}):
     return do_request(requests.get, url, data=json.dumps(data))
 
+
 def do_delete(url, data={}):
     return do_request(requests.delete, url, data=json.dumps(data))
+
 
 @cmd
 def serve(port):
     try:
         port = schema.And(schema.Use(int), lambda n: MIN_PORT_NUMBER <= n <= MAX_PORT_NUMBER).validate(port)
     except schema.SchemaError:
-	sys.exit('Error: Invaid port. Must be in the range 1-65535.')
+        sys.exit('Error: Invaid port. Must be in the range 1-65535.')
     except Exception as e:
-	sys.exit('Unxpected Error!!! \n %s' % e)
+        sys.exit('Unxpected Error!!! \n %s' % e)
 
     """Start the VPN API server"""
     # We need to import api here so that the functions within it get registered
@@ -134,6 +143,7 @@ def list_vpns():
     url = object_url('vpns')
     check_status_code(do_get(url))
 
+
 @cmd
 def vpn_create(project, network):
     """Create a vpn for <project, network>"""
@@ -142,14 +152,16 @@ def vpn_create(project, network):
     sys.stderr.write('status: %d\n' % response.status_code)
     sys.stderr.write('text: %s\n' % response.text)
 
+
 @cmd
 def vpn_destroy(project, network):
     """Delete vpn for <project, network>"""
     url = object_url('vpn', project)
     check_status_code(do_delete(url, data={'network' : network}))
 
+
 @cmd
-def get_vpn_certificates(project, network):
+1def get_vpn_certificates(project, network):
     """Get client specific data about a vpn endpoint"""
     url = object_url('vpn', project)
     response = do_get(url, data={'network' : network})
@@ -162,11 +174,13 @@ def get_vpn_certificates(project, network):
     sys.stderr.write("response.text: <%s>\n" % response.text)
     certs = json.loads(response.text)
     store_certificates(certs)
-    
+
 
 @cmd
 def help(*commands):
-    """Display usage of all following <commands>, or of all commands if none are given"""
+    """Display usage of all following <commands>, or of all commands if none are
+    given.
+    """
     if not commands:
         sys.stdout.write('Usage: %s <command> <arguments...> \n' % sys.argv[0])
         sys.stdout.write('Where <command> is one of:\n')

@@ -1,8 +1,9 @@
 """Manage server-side startup"""
-import sys
+# import sys
 import os
 
 from vpns.endpoint import *
+
 
 def init_endpoints():
     # Note: will raise exception if cert_path does not exist
@@ -19,10 +20,11 @@ def init_endpoints():
             if ep.node != 'NONE':
                 for node in Nodes:
                     if node.key == ep.node:
-                        logging.info('found in use node %s, net %s' 
+                        logging.info('found in use node %s, net %s'
                                      % (ep.node, ep.network))
                         ep.nic, ep.channel = node.find_network(ep.network)
                         break
+
 
 def init_nodes():
     project_nodes = vpn_project_nodes()
@@ -30,6 +32,7 @@ def init_nodes():
         node = VpnNode(n)
         register_nics(node)
         Nodes.append(node)
+
 
 def init():
     """Set up the api server's internal state.

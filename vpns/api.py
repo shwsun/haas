@@ -23,15 +23,18 @@ import logging
 from schema import Schema, Optional
 
 from vpns.endpoint import *
-from vpns.hilclient import node_connect_network, node_detach_network, show_network
+from vpns.hilclient import (
+    node_connect_network, node_detach_network, show_network)
+#from vpns.endpoint import Endpoints as ep
 
 from haas.auth import get_auth_backend
 from haas.rest import rest_call
-from haas.errors import *
+from haas.errors import (
+    AllocationError, DuplicateError, ServerError, NotFoundError)
 
 
-                            # Project Code #
-                            ################
+# Project Code #
+################
 
 
 @rest_call('GET', '/vpns', Schema({}))
@@ -41,23 +44,27 @@ def list_vpns():
     Returns a JSON array of strings representing a list of <project,channel>
     tuples.
 
-    Example:  '[{"project" : "proj", "network" : "net"},
-                {"project" : "myproj", "network" : "mynet"}]'
+    Example:  '[{"project": "proj", "network": {
+                                        "name": "net", "channel": "chann"}
+                {"project": "myproj", "network": {
+                                        "name": "mynet", "channel": "chann"}}]'
     """
     get_auth_backend().require_admin()
-    vpns = [{'id' : ep.key,
-             'project' : ep.project,
-             'network' : ep.network,
-             'node'    : ep.node,
-             'nic'     : ep.nic
-            } for ep in Endpoints]
+    vpns = [{'id': ep.key,
+             'project': ep.project,
+             'network': {
+                 'name': ep.network,
+                 'channel': ep.chann
+             },
+             'node': ep.node,
+             'nic': ep.nic} for ep in Endpoints]
     return json.dumps(vpns)
 
 
 @rest_call('PUT', '/vpn/<project>', Schema({'project': basestring,
                                             'network': basestring}))
-def vpn_create(project, network):
-    """Create a VPN for <project,network>.
+def vpn_create(project, network, channel):
+    """Create a VPN for <project, network, channel>.
 
     If the VPN already exists, a DuplicateError will be raised.
     """
@@ -86,13 +93,13 @@ def vpn_create(project, network):
         return response.text, response.status_code
 
     properties = json.loads(response.text)
-    channels = properties['channels']
+    # channels = properties['channels']
 
-    ep.allocate(project, node.key, network, nic, channels[0])
+    ep.allocate(project, node.key, network, nic, channel)
 
     ep.claim()
 
-    response = node_connect_network(node.key, nic, network, channels[0])
+    response = node_connect_network(node.key, nic, network, channel)
     if response.status_code < 200 or response.status_code >= 300:
         logging.warn("node_connect_network failed: %d" % response.status_code)
         ep.release()
@@ -102,7 +109,7 @@ def vpn_create(project, network):
 
     return '', 202
 
-    
+
 @rest_call('GET', '/vpn/<project>', Schema({'project': basestring,
                                             'network': basestring}))
 def get_vpn_certificates(project, network):
@@ -145,20 +152,22 @@ def vpn_destroy(project, network):
 
 def _assert_absent(project, network):
     for ep in Endpoints:
-        if project==ep.project and network==ep.network:
+        if project == ep.project and network == ep.network:
             raise DuplicateError(network)
-            
+
+
 def _must_find(project, network):
     for ep in Endpoints:
-        if project==ep.project and network==ep.network:
+        if project == ep.project and network == ep.network:
             return ep
 
-    raise NotFoundError("No VPN for project %s network %s." 
+    raise NotFoundError("No VPN for project %s network %s."
                         % (project, network))
+
 
 def _find_node(node):
     for n in Nodes:
         if n.key == node:
             return n
 
-    raise NotFoundError("No node for %s registered." % node) 
+    raise NotFoundError("No node for %s registered." % node)

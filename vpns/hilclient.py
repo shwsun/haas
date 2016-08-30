@@ -22,6 +22,7 @@ import sys
 import urllib
 import schema
 
+
 # TODO: This function's name is no longer very accurate.  As soon as it is
 # safe, we should change it to something more generic.
 def hilclient_url(*args):
@@ -31,6 +32,7 @@ def hilclient_url(*args):
     for arg in args:
         url += '/' + urllib.quote(arg,'')
     return url
+
 
 def hilclient_request(fn, url, data={}):
     """Helper function for making HTTP requests against the API.
@@ -53,22 +55,28 @@ def hilclient_request(fn, url, data={}):
         kwargs['auth'] = (username, password)
     return fn(url, data=data, **kwargs)
 
+
 def hilclient_put(url, data={}):
     return hilclient_request(requests.put, url, data=json.dumps(data))
+
 
 def hilclient_post(url, data={}):
     return hilclient_request(requests.post, url, data=json.dumps(data))
 
+
 def hilclient_get(url):
     return hilclient_request(requests.get, url)
 
+
 def hilclient_delete(url, data={}):
     return hilclient_request(requests.delete, url, data=json.dumps(data))
+
 
 def node_connect_network(node, nic, network, channel):
     """Connect <node> to <network> on given <nic> and <channel>"""
     url = hilclient_url('node', node, 'nic', nic, 'connect_network')
     return hilclient_post(url, data={'network': network, 'channel': channel})
+
 
 def node_detach_network(node, nic, network):
     """Detach <node> from the given <network> on the given <nic>"""
@@ -78,22 +86,22 @@ def node_detach_network(node, nic, network):
 
 def node_register(node, subtype, *args):
     """Register a node named <node>, with the given type
-	if obm is of type: ipmi then provide arguments
-	"ipmi", <hostname>, <ipmi-username>, <ipmi-password>
+    if obm is of type: ipmi then provide arguments
+    "ipmi", <hostname>, <ipmi-username>, <ipmi-password>
     """
     obm_api = "http://schema.massopencloud.org/haas/v0/obm/"
     obm_types = [ "ipmi", "mock" ]
-    #Currently the classes are hardcoded
-    #In principle this should come from api.py
-    #In future an api call to list which plugins are active will be added.
+    # Currently the classes are hardcoded
+    # In principle this should come from api.py
+    # In future an api call to list which plugins are active will be added.
 
     if subtype in obm_types:
-	if len(args) == 3:
-	    obminfo = {"type": obm_api+subtype, "host": args[0],
-	    		"user": args[1], "password": args[2]
-	    	      }
-	else:
-	    raise BadArgumentError('Wrong number of arguments for subtype')
+        if len(args) == 3:
+            obminfo = {"type": obm_api+subtype, "host": args[0],
+                       "user": args[1], "password": args[2]
+            }
+        else:
+            raise BadArgumentError('Wrong number of arguments for subtype')
     else:
         raise BadArgumentError('Illegal OBM subtype: %s' % subtype)
 
@@ -108,7 +116,9 @@ def node_delete(node):
 
 
 def node_register_nic(node, nic, macaddr):
-    """Register existence of a <nic> with the given <macaddr> on the given <node>"""
+    """
+    Register existence of a <nic> with the given <macaddr> on the given <node>
+    """
     url = hilclient_url('node', node, 'nic', nic)
     return hilclient_put(url, data={'macaddr':macaddr})
 
@@ -118,21 +128,20 @@ def node_delete_nic(node, nic):
     url = hilclient_url('node', node, 'nic', nic)
     return hilclient_delete(url)
 
+
 def show_node(node):
     """Display information about a <node>"""
     url = hilclient_url('node', node)
     return hilclient_get(url)
+
 
 def show_network(network):
     """Display information about <network>"""
     url = hilclient_url('network', network)
     return hilclient_get(url)
 
+
 def list_project_nodes(project):
     """List all nodes attached to a <project>"""
     url = hilclient_url('project', project, 'nodes')
     return hilclient_get(url)
-
-
-
-
