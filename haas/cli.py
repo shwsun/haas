@@ -43,12 +43,12 @@ class HTTPClient(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def request(method, url, data=None):
+    def request(method, url, data=None, params=None):
         """Make an HTTP request
 
-        Makes an HTTP request on URL `url` with method `method` and request
-        body `data` (if supplied). May add authentication or other
-        backend-specific information to the request.
+        Makes an HTTP request on URL `url` with method `method`, request body
+        `data`(if supplied) and query parameter `params`(if supplied). May add
+        authentication or other backend-specific information to the request.
 
         Parameters
         ----------
@@ -59,6 +59,9 @@ class HTTPClient(object):
             The URL to act on
         data : str, optional
             The body of the request
+        params : dictionary, optional
+            The query parameter, e.g. {'key1': 'val1', 'key2': 'val2'},
+            dictionary key can't be `None`
 
         Returns
         -------
@@ -95,7 +98,7 @@ class KeystoneHTTPClient(HTTPClient):
         """
         self.session = session
 
-    def request(self, method, url, data=None):
+    def request(self, method, url, data=None, params=None):
         """Make an HTTP request using keystone for authentication.
 
         Smooths over the differences between python-keystoneclient's
@@ -110,7 +113,8 @@ class KeystoneHTTPClient(HTTPClient):
             # we expect, but the names are the same:
             return self.session.request(method=method,
                                         url=url,
-                                        data=data)
+                                        data=data,
+                                        params=params)
         except HttpError as e:
             return e.response
 
