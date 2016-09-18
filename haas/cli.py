@@ -47,7 +47,7 @@ class HTTPClient(object):
         """Make an HTTP request
 
         Makes an HTTP request on URL `url` with method `method`, request body
-        `data`(if supplied) and GET parameter `params`(if supplied). May add
+        `data`(if supplied) and query parameter `params`(if supplied). May add
         authentication or other backend-specific information to the request.
 
         Parameters
@@ -59,8 +59,9 @@ class HTTPClient(object):
             The URL to act on
         data : str, optional
             The body of the request
-        params : str, optional
-            The GET parameter
+        params : dictionary, optional
+            The query parameter, e.g. {'key1': 'val1', 'key2': 'val2'},
+            dictionary key can't be `None`
 
         Returns
         -------
