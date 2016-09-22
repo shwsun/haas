@@ -259,38 +259,11 @@ def test_project_call(keystone_projects, caller_info, project_name):
     keystonehttpclient = KeystoneHTTPClient(sess)
     path = 'project-only/' + project_name
     url = 'http://localhost:6000/' + path
-    resp = KeystoneHTTPClient.request(keystonehttpclient, 'GET', url)
-    if caller_info['admin'] or caller_info['project_name'] == project_name:
-        assert 200 <= resp.status_code < 300, (
-            "Status code for project-only call should be successful for "
-            "admins and that project."
-        )
-    else:
-        assert 400 < resp.status_code <= 500, (
-            "Status code for project-only call by other (non-admin) projects "
-            "should fail."
-        )
-
-
-@pytest.mark.parametrize('caller_info,project_name', [
-    (user, project) for user in user_db for project in project_db
-])
-def KeystoneHTTPClient_test_project_call(keystone_projects, caller_info,
-                                         project_name):
-    sess = _get_keystone_session(username=caller_info['name'],
-                                 password=caller_info['password'],
-                                 project_name=caller_info['project_name'])
-    # resp = _do_get(sess, 'project-only/' + project_name)
-    keystonehttpclient = KeystoneHTTPClient(sess)
-    path = 'project-only/' + project_name
-    url = 'http://localhost:6000/' + path
     payload = {'key1': 'value1', 'key2': 'value2'}
-    resp = KeystoneHTTPClient.request(keystonehttpclient, 'GET', url,
-                                      params=payload)
+    resp = KeystoneHTTPClient.request(keystonehttpclient, 'GET', url)
     resp2 = KeystoneHTTPClient.request(keystonehttpclient, 'GET', url,
-                                       params=None)
-
-    assert resp == resp2
+                                       params=payload)
+    assert resp == resp2, ("This should fail, don't panic.")
     # if caller_info['admin'] or caller_info['project_name'] == project_name:
     #     assert 200 <= resp.status_code < 300, (
     #         "Status code for project-only call should be successful for "
@@ -298,7 +271,7 @@ def KeystoneHTTPClient_test_project_call(keystone_projects, caller_info,
     #     )
     # else:
     #     assert 400 < resp.status_code <= 500, (
-    #         "Status code for project-only call by other (non-admin) projects "
+    #     "Status code for project-only call by other (non-admin) projects "
     #         "should fail."
     #     )
 
