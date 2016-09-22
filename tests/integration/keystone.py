@@ -19,6 +19,8 @@ from keystoneauth1 import session
 from keystoneauth1.exceptions.http import HttpError
 from keystoneclient import client
 
+from haas.cli import KeystoneHTTPClient
+
 
 # A list of projects to be added to HaaS's database.
 project_db = ['admin', 'service']
@@ -108,6 +110,7 @@ def keystone_session():
 def keystone_client(keystone_session):
     """Return a keystone client from the options in haas.cfg"""
     return client.Client(session=keystone_session)
+    # return KeystoneHTTPClient(session=keystone_session)
 
 
 @pytest.fixture
@@ -252,7 +255,11 @@ def test_project_call(keystone_projects, caller_info, project_name):
     sess = _get_keystone_session(username=caller_info['name'],
                                  password=caller_info['password'],
                                  project_name=caller_info['project_name'])
-    resp = _do_get(sess, 'project-only/' + project_name)
+    # resp = _do_get(sess, 'project-only/' + project_name)
+    keystonehttpclient = KeystoneHTTPClient(sess)
+    path = 'project-only/' + project_name
+    url = 'http://localhost:6000/' + path
+    resp = KeystoneHTTPClient.request(keystonehttpclient, 'GET', url)
     if caller_info['admin'] or caller_info['project_name'] == project_name:
         assert 200 <= resp.status_code < 300, (
             "Status code for project-only call should be successful for "
@@ -263,6 +270,37 @@ def test_project_call(keystone_projects, caller_info, project_name):
             "Status code for project-only call by other (non-admin) projects "
             "should fail."
         )
+
+
+@pytest.mark.parametrize('caller_info,project_name', [
+    (user, project) for user in user_db for project in project_db
+])
+def KeystoneHTTPClient_test_project_call(keystone_projects, caller_info,
+                                         project_name):
+    sess = _get_keystone_session(username=caller_info['name'],
+                                 password=caller_info['password'],
+                                 project_name=caller_info['project_name'])
+    # resp = _do_get(sess, 'project-only/' + project_name)
+    keystonehttpclient = KeystoneHTTPClient(sess)
+    path = 'project-only/' + project_name
+    url = 'http://localhost:6000/' + path
+    payload = {'key1': 'value1', 'key2': 'value2'}
+    resp = KeystoneHTTPClient.request(keystonehttpclient, 'GET', url,
+                                      params=payload)
+    resp2 = KeystoneHTTPClient.request(keystonehttpclient, 'GET', url,
+                                       params=None)
+
+    assert resp == resp2
+    # if caller_info['admin'] or caller_info['project_name'] == project_name:
+    #     assert 200 <= resp.status_code < 300, (
+    #         "Status code for project-only call should be successful for "
+    #         "admins and that project."
+    #     )
+    # else:
+    #     assert 400 < resp.status_code <= 500, (
+    #         "Status code for project-only call by other (non-admin) projects "
+    #         "should fail."
+    #     )
 
 
 @pytest.mark.parametrize('caller_info', user_db)
@@ -306,31 +344,3 @@ def test_unregistered_admin():
         "Status code for admin-only call by non-registered admin project "
         "should still succeed."
     )
-
-
-from haas.cli import KeystoneHTTPClient
-def do_get_extra(sess, path, data=None, params=None):
-    try:
-        KeystoneHTTPClient.request('GET', 'http://localhost:6000/' + path,
-                                   data=data, params=params)
-    except HttpError as e:
-        return e.response
-
-@pytest.mark.parametrize('caller_info,project_name', [
-    (user, project) for user in user_db for project in project_db
-])
-def KeystoneHTTPClient_test_project_call(keystone_projects, caller_info, project_name):
-    sess = _get_keystone_session(username=caller_info['name'],
-                                 password=caller_info['password'],
-                                 project_name=caller_info['project_name'])
-    resp = do_get_extra(sess, 'project-only/' + project_name)
-    if caller_info['admin'] or caller_info['project_name'] == project_name:
-        assert 200 <= resp.status_code < 300, (
-            "Status code for project-only call should be successful for "
-            "admins and that project."
-        )
-    else:
-        assert 400 < resp.status_code <= 500, (
-            "Status code for project-only call by other (non-admin) projects "
-            "should fail."
-        )
