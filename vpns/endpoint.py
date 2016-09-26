@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 VpnProject = 'VPN_project'
 Endpoints = []
 Nodes = []
-
+db = SQLAlchemy(app)
 
 class VpnEndpoint:
     """VpnEndpoint is the base of each and every vpn process.
@@ -177,10 +177,47 @@ def store_certificates(certs):
             sys.stderr.write("Can't write file %s: %s\n" % certdir, str(e))
 
 
-class VpnNic:
-    def __init__(self, name, nets):
-        self.key = name
-        self.networks = nets.copy()
+# class VpnNic:
+#     def __init__(self, name, nets):
+#         self.key = name
+#         self.networks = nets.copy()
+
+class Vpnnic(db.Model):
+    """a network interface for a node running vpn processes"""
+    id = db.Column(db.Integer, primary_key=True)
+    label = db.Column(db.String, nullable=False)
+
+    # The node to which this Vpnnic belongs:
+    owner_id = db.Column(db.ForeignKey('node.id'), nullable=False)
+    owner = db.relationship("Node", backref=db.backref('vpnnics'))
+
+    # The network to which this Vpnnic is attached.
+    network_id = db.Column(db.ForeignKey('network.id'))
+    network = db.relationship("Network", backref=db.backref('vpnnics'))
+
+    def __init__(self, node, label):
+        """Create an Vpnnic attached to the given node. with the given label."""
+        self.owner = node
+        self.label = label
+
+    @no_dry_run
+    def create(self):
+        """Create the vpnnic within livbirt.
+
+        XXX: This is a noop if the Vpnnic isn't connected to a network. This
+        means that the physical node won't have a corresponding nic, even a
+        disconnected one.
+        """
+        if not self.network:
+            # It is non-trivial to make a NIC not connected to a network, so
+            # do nothing at all instead.
+            return
+        vlan_no = str(self.network.network_id)
+        bridge = 'br-vlan%s' % vlan_no
+        check_call(_on_virt_uri(['virsh',
+                                 'attach-interface', self.owner._vmname(),
+                                 'bridge', bridge,
+                                 '--config']))
 
 
 class VpnNode:

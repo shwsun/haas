@@ -32,6 +32,8 @@ from haas.rest import rest_call
 from haas.errors import (
     AllocationError, DuplicateError, ServerError, NotFoundError)
 
+from haas import model
+
 
 # Project Code #
 ################
@@ -149,6 +151,113 @@ def vpn_destroy(project, network):
 
     ep.unclaim()
 
+
+# Virtual nic for VPN process #
+###############################
+
+
+@rest_call('PUT', '/node/<node>/vpnnic/<vpnnic>', Schema({
+    'node': basestring, 'vpnnic': basestring,
+}))
+def vpnnode_create_vpnnic(node, vpnnic):
+    """Create vpnnic attached to given node.
+
+    If the node does not exist, a NotFoundError will be raised.
+
+    If there is already an vpnnic with that name, a DuplicateError will
+    be raised.
+    """
+    node = _must_find(model.Node, node)
+    get_auth_backend().require_project_access(node.project)
+    _assert_absent_n(node, model.Vpnnic, vpnnic)
+
+    # if not headnode.dirty:
+    #     raise IllegalStateError
+
+    vpnnic = model.Vpnnic(node, vpnnic)
+    db.session.add(vpnnic)
+    db.session.commit()
+
+
+@rest_call('DELETE', '/headnode/<headnode>/hnic/<hnic>', Schema({
+    'headnode': basestring, 'hnic': basestring,
+}))
+def headnode_delete_hnic(headnode, hnic):
+    """Delete hnic on a given headnode.
+
+    If the headnode or hnic does not exist, a NotFoundError will be raised.
+
+    If the headnode's VM has already created (headnode is not "dirty"), raises
+    an IllegalStateError
+    """
+    headnode = _must_find(model.Headnode, headnode)
+    get_auth_backend().require_project_access(headnode.project)
+    hnic = _must_find_n(headnode, model.Hnic, hnic)
+
+    if not headnode.dirty:
+        raise IllegalStateError
+
+    db.session.delete(hnic)
+    db.session.commit()
+
+
+@rest_call('POST', '/headnode/<headnode>/hnic/<hnic>/connect_network', Schema({
+    'headnode': basestring, 'hnic': basestring, 'network': basestring,
+}))
+def headnode_connect_network(headnode, hnic, network):
+    """Connect a headnode's hnic to a network.
+
+    Raises IllegalStateError if the headnode has already been started.
+
+    Raises ProjectMismatchError if the project does not have access rights to
+    the given network.
+
+    Raises BadArgumentError if the network is a non-allocated network. This
+    is currently unsupported due to an implementation limitation, but will be
+    supported in a future release. See issue #333.
+    """
+    headnode = _must_find(model.Headnode, headnode)
+    get_auth_backend().require_project_access(headnode.project)
+    hnic = _must_find_n(headnode, model.Hnic, hnic)
+    network = _must_find(model.Network, network)
+
+    if not network.allocated:
+        raise BadArgumentError("Headnodes may only be connected to networks "
+                               "allocated by the project.")
+
+    if not headnode.dirty:
+        raise IllegalStateError
+
+    project = headnode.project
+
+    if (network.access is not None) and (network.access is not project):
+        raise ProjectMismatchError("Project does not have access to given network.")
+
+    hnic.network = network
+    db.session.commit()
+
+
+@rest_call('POST', '/headnode/<headnode>/hnic/<hnic>/detach_network', Schema({
+    'headnode': basestring, 'hnic': basestring,
+}))
+def headnode_detach_network(headnode, hnic):
+    """Detach a heanode's nic from any network it's on.
+
+    Raises IllegalStateError if the headnode has already been started.
+    """
+    headnode = _must_find(model.Headnode, headnode)
+    get_auth_backend().require_project_access(headnode.project)
+    hnic = _must_find_n(headnode, model.Hnic, hnic)
+
+    if not headnode.dirty:
+        raise IllegalStateError
+
+    hnic.network = None
+    db.session.commit()
+
+
+#  helper functions  #
+######################
 
 def _assert_absent(project, network):
     for ep in Endpoints:
