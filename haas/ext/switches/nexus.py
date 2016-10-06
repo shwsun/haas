@@ -94,6 +94,10 @@ class _Session(_console.Session):
         self.disable_vlan(vlan_id)
         self.console.sendline('sw trunk native vlan ' + self.dummy_vlan)
 
+    def revert(self):
+        self._sendline('sw trunk native vlan none')
+        self._sendline('sw trunk allowed vlan none')
+
     def disconnect(self):
         self.console.sendline('exit')
 

@@ -825,6 +825,57 @@ def port_detach_nic(switch, port):
     db.session.commit()
 
 
+@rest_call('GET', '/port/<path:port>', Schema({
+    'port': basestring,
+}))
+def show_port(port):
+    """Display nic and switch info related to this port.
+
+     If no nic or other network attachments, nic will be None.
+     """
+    port = _must_find(model.Port, port)
+
+    get_auth_backend().require_admin()
+    nic = model.Nic.query.filter(model.Nic.port_id == port.id).first()
+
+    result = {
+        'name': port.label,
+        'switch': port.owner.label,
+        'nic': nic.label,
+        #'niclist': niclist
+        #'node': node,
+        #'nics': nics
+        }
+
+
+@rest_call('POST', '/port/<path:port>/revert', Schema({
+    'port': basestring,
+}))
+def revert_port(port):
+    """Revert port to reinstate network attachments.
+
+     If there is no nic connected to the port, return.
+     """
+    get_auth_backend().require_admin()
+    port = _must_find(model.Port, port)
+    nic = model.Nic.query.filter(model.Nic.port_id == port.id).first()
+
+    if nic is None:
+        return '', 404
+
+    #delete old entry and create new oned
+    nic = _must_find(model.Nic, nic.label)
+    for a in nic.attachments:
+        db.session.query(model.NetworkAttachment)\
+                  .filter_by(nic=a.nic, channel=a.channel)\
+                  .delete()
+        db.session.add(model.NetworkingAction(nic=a.nic,
+                                              new_network=a.network,
+                                              channel=a.channel))
+        port.owner.revert(port)
+        db.session.commit()
+
+
 @rest_call('GET', '/nodes/<is_free>', Schema({'is_free': basestring}))
 def list_nodes(is_free):
     """List all nodes or all free nodes

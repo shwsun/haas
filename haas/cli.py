@@ -646,6 +646,13 @@ def port_detach_nic(switch, port):
 
 
 @cmd
+def revert_port(port):
+    """Revert <port> to state in HaaS database"""
+    url = object_url('port', port, 'revert')
+    do_post(url)
+
+
+@cmd
 def list_nodes(is_free):
     """List all nodes or all free nodes
 
@@ -691,6 +698,13 @@ def show_network(network):
 def show_node(node):
     """Display information about a <node>"""
     url = object_url('node', node)
+    do_get(url)
+
+
+@cmd
+def show_port(port):
+    """Display information about a <port>"""
+    url = object_url('port', port)
     do_get(url)
 
 

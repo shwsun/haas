@@ -67,6 +67,7 @@ def switchinit():
     api.switch_register_port('sw0', '3')
 
 
+
 class TestProjectCreateDelete:
     """Tests for the haas.api.project_* functions."""
 
@@ -91,10 +92,10 @@ class TestProjectCreateDelete:
 
     def test_project_delete_hasnode(self):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
 
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
@@ -103,10 +104,10 @@ class TestProjectCreateDelete:
 
     def test_project_delete_success_nodesdeleted(self):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
         api.project_detach_node('anvil-nextgen', 'node-99')
@@ -152,23 +153,23 @@ class TestNetworking:
                             hostname="switchname")
         for port in '1', '2', '3':
             api.switch_register_port('sw0', port)
-        api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            api.node_register('node-99', obm={
+                "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+                "host": "ipmihost",
+                "user": "root",
+                "password": "tapeworm"})
 
         api.node_register('node-98', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
 
         api.node_register('node-97', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
 
         api.node_register_nic('node-99', 'eth0', 'DE:AD:BE:EF:20:14')
         api.node_register_nic('node-98', 'eth0', 'DE:AD:BE:EF:20:15')
@@ -185,10 +186,10 @@ class TestNetworking:
 
     def test_networking_nic_no_port(self):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', 'eth0', 'DE:AD:BE:EF:20:14')
 
         api.project_create('anvil-nextgen')
@@ -204,10 +205,10 @@ class TestProjectConnectDetachNode:
     def test_project_connect_node(self):
         api.project_create('anvil-nextgen')
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
 
         api.project_connect_node('anvil-nextgen', 'node-99')
         project = api._must_find(model.Project, 'anvil-nextgen')
@@ -218,10 +219,10 @@ class TestProjectConnectDetachNode:
     def test_project_connect_node_project_nexist(self):
         """Tests that connecting a node to a nonexistent project fails"""
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         with pytest.raises(api.NotFoundError):
             api.project_connect_node('anvil-nextgen', 'node-99')
 
@@ -234,10 +235,10 @@ class TestProjectConnectDetachNode:
     def test_project_connect_node_node_busy(self):
         """Connecting a node which is not free to a project should fail."""
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
 
         api.project_create('anvil-oldtimer')
         api.project_create('anvil-nextgen')
@@ -249,10 +250,10 @@ class TestProjectConnectDetachNode:
     def test_project_detach_node(self):
         api.project_create('anvil-nextgen')
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.project_connect_node('anvil-nextgen', 'node-99')
         api.project_detach_node('anvil-nextgen', 'node-99')
         project = api._must_find(model.Project, 'anvil-nextgen')
@@ -264,20 +265,20 @@ class TestProjectConnectDetachNode:
         """Tests that removing a node from a project it's not in fails."""
         api.project_create('anvil-nextgen')
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         with pytest.raises(api.NotFoundError):
             api.project_detach_node('anvil-nextgen', 'node-99')
 
     def test_project_detach_node_project_nexist(self):
         """Tests that removing a node from a nonexistent project fails."""
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         with pytest.raises(api.NotFoundError):
             api.project_detach_node('anvil-nextgen', 'node-99')
 
@@ -290,10 +291,10 @@ class TestProjectConnectDetachNode:
     def test_project_detach_node_on_network(self, switchinit):
         api.project_create('anvil-nextgen')
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', 'eth0', 'DE:AD:BE:EF:20:13')
         api.project_connect_node('anvil-nextgen', 'node-99')
         network_create_simple('hammernet', 'anvil-nextgen')
@@ -305,10 +306,10 @@ class TestProjectConnectDetachNode:
     def test_project_detach_node_success_nic_not_on_network(self):
         api.project_create('anvil-nextgen')
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', 'eth0', 'DE:AD:BE:EF:20:13')
         api.project_connect_node('anvil-nextgen', 'node-99')
         network_create_simple('hammernet', 'anvil-nextgen')
@@ -317,10 +318,10 @@ class TestProjectConnectDetachNode:
     def test_project_detach_node_removed_from_network(self, switchinit):
         api.project_create('anvil-nextgen')
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', 'eth0', 'DE:AD:BE:EF:20:13')
         api.project_connect_node('anvil-nextgen', 'node-99')
         network_create_simple('hammernet', 'anvil-nextgen')
@@ -340,13 +341,13 @@ class TestRegisterCorrectObm:
 
     def test_ipmi(self):
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
 
         node_obj = model.Node.query.filter_by(label="compute-01")\
-                        .join(model.Obm).join(haas.ext.obm.ipmi.Ipmi).first()
+                                   .join(model.Obm).join(haas.ext.obm.ipmi.Ipmi).first()
 
         # Comes from table node
         assert str(node_obj.label) == 'compute-01'
@@ -357,13 +358,13 @@ class TestRegisterCorrectObm:
 
     def test_mockobm(self):
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/mock",
-                  "host": "mockObmhost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/mock",
+            "host": "mockObmhost",
+            "user": "root",
+            "password": "tapeworm"})
 
         node_obj = model.Node.query.filter_by(label="compute-01")\
-                        .join(model.Obm).join(haas.ext.obm.mock.MockObm).first()  # noqa
+                                   .join(model.Obm).join(haas.ext.obm.mock.MockObm).first()  # noqa
 
         # Comes from table node
         assert str(node_obj.label) == 'compute-01'
@@ -378,31 +379,31 @@ class TestNodeRegisterDelete:
 
     def test_node_register(self):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api._must_find(model.Node, 'node-99')
 
     def test_duplicate_node_register(self):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         with pytest.raises(api.DuplicateError):
             api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+                "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+                "host": "ipmihost",
+                "user": "root",
+                "password": "tapeworm"})
 
     def test_node_delete(self):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_delete('node-99')
         with pytest.raises(api.NotFoundError):
             api._must_find(model.Node, 'node-99')
@@ -414,10 +415,10 @@ class TestNodeRegisterDelete:
     def test_node_delete_nic_exist(self):
         """node_delete should respond with an error if the node has nics."""
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', 'eth0', 'DE:AD:BE:EF:20:14')
         with pytest.raises(api.BlockedError):
             api.node_delete('node-99')
@@ -427,10 +428,10 @@ class TestNodeRegisterDeleteNic:
 
     def test_node_register_nic(self):
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('compute-01', '01-eth0', 'DE:AD:BE:EF:20:14')
         nic = api._must_find(model.Nic, '01-eth0')
         assert nic.owner.label == 'compute-01'
@@ -441,10 +442,10 @@ class TestNodeRegisterDeleteNic:
 
     def test_node_register_nic_duplicate_nic(self):
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('compute-01', '01-eth0', 'DE:AD:BE:EF:20:14')
         nic = api._must_find(model.Nic, '01-eth0')
         with pytest.raises(api.DuplicateError):
@@ -452,10 +453,10 @@ class TestNodeRegisterDeleteNic:
 
     def test_node_delete_nic_success(self):
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('compute-01', '01-eth0', 'DE:AD:BE:EF:20:14')
         api.node_delete_nic('compute-01', '01-eth0')
         api._assert_absent(model.Nic, '01-eth0')
@@ -463,10 +464,10 @@ class TestNodeRegisterDeleteNic:
 
     def test_node_delete_nic_nic_nexist(self):
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         with pytest.raises(api.NotFoundError):
             api.node_delete_nic('compute-01', '01-eth0')
 
@@ -476,40 +477,40 @@ class TestNodeRegisterDeleteNic:
 
     def test_node_delete_nic_wrong_node(self):
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register('compute-02', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('compute-01', '01-eth0', 'DE:AD:BE:EF:20:14')
         with pytest.raises(api.NotFoundError):
             api.node_delete_nic('compute-02', '01-eth0')
 
     def test_node_delete_nic_wrong_nexist_node(self):
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('compute-01', '01-eth0', 'DE:AD:BE:EF:20:14')
         with pytest.raises(api.NotFoundError):
             api.node_delete_nic('compute-02', '01-eth0')
 
     def test_node_register_nic_diff_nodes(self):
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register('compute-02', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('compute-01', 'ipmi', 'DE:AD:BE:EF:20:14')
         api.node_register_nic('compute-02', 'ipmi', 'DE:AD:BE:EF:20:14')
 
@@ -518,10 +519,10 @@ class TestNodeConnectDetachNetwork:
 
     def test_node_connect_network_success(self, switchinit):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
@@ -542,10 +543,10 @@ class TestNodeConnectDetachNetwork:
 
     def test_node_connect_network_wrong_node_in_project(self, switchinit):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
@@ -553,10 +554,10 @@ class TestNodeConnectDetachNetwork:
         api.port_connect_nic('sw0', '3', 'node-99', '99-eth0')
         api.node_connect_network('node-99', '99-eth0', 'hammernet')
         api.node_register('node-98', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.project_connect_node('anvil-nextgen', 'node-98')   # added
 
         with pytest.raises(api.NotFoundError):
@@ -564,29 +565,29 @@ class TestNodeConnectDetachNetwork:
 
     def test_node_connect_network_wrong_node_not_in_project(self):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
         network_create_simple('hammernet', 'anvil-nextgen')
         api.node_register('node-98', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
 
         with pytest.raises(api.NotFoundError):
             api.node_connect_network('node-98', '99-eth0', 'hammernet')
 
     def test_node_connect_network_no_such_node(self):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
@@ -597,11 +598,11 @@ class TestNodeConnectDetachNetwork:
 
     def test_node_connect_network_no_such_nic(self):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
-#        api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
+        #        api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
         network_create_simple('hammernet', 'anvil-nextgen')
@@ -611,26 +612,26 @@ class TestNodeConnectDetachNetwork:
 
     def test_node_connect_network_no_such_network(self):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
-#        network_create_simple('hammernet', 'anvil-nextgen')
+        #        network_create_simple('hammernet', 'anvil-nextgen')
         with pytest.raises(api.NotFoundError):
             api.node_connect_network('node-99', '99-eth0', 'hammernet')
 
     def test_node_connect_network_node_not_in_project(self):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
-#        api.project_connect_node('anvil-nextgen', 'node-99')
+        #        api.project_connect_node('anvil-nextgen', 'node-99')
         network_create_simple('hammernet', 'anvil-nextgen')
 
         with pytest.raises(api.ProjectMismatchError):
@@ -638,10 +639,10 @@ class TestNodeConnectDetachNetwork:
 
     def test_node_connect_network_different_projects(self, switchinit):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_create('anvil-oldtimer')   # added
@@ -655,10 +656,10 @@ class TestNodeConnectDetachNetwork:
 
     def test_node_connect_network_already_attached_to_same(self, switchinit):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
@@ -674,10 +675,10 @@ class TestNodeConnectDetachNetwork:
     def test_node_connect_network_already_attached_differently(self,
                                                                switchinit):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
@@ -692,10 +693,10 @@ class TestNodeConnectDetachNetwork:
 
     def test_node_detach_network_success(self, switchinit):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
@@ -711,34 +712,34 @@ class TestNodeConnectDetachNetwork:
         network = api._must_find(model.Network, 'hammernet')
         nic = api._must_find(model.Nic, '99-eth0')
         assert model.NetworkAttachment.query \
-            .filter_by(network=network, nic=nic).count() == 0
+                                      .filter_by(network=network, nic=nic).count() == 0
 
     def test_node_detach_network_not_attached(self):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
         network_create_simple('hammernet', 'anvil-nextgen')
-#        api.node_connect_network('node-99', '99-eth0', 'hammernet')
+        #        api.node_connect_network('node-99', '99-eth0', 'hammernet')
 
         with pytest.raises(api.BadArgumentError):
             api.node_detach_network('node-99', '99-eth0', 'hammernet')
 
     def test_node_detach_network_wrong_node_in_project(self, switchinit):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register('node-98', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
@@ -752,15 +753,15 @@ class TestNodeConnectDetachNetwork:
 
     def test_node_detach_network_wrong_node_not_in_project(self, switchinit):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register('node-98', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
@@ -773,10 +774,10 @@ class TestNodeConnectDetachNetwork:
 
     def test_node_detach_network_no_such_node(self, switchinit):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
@@ -789,10 +790,10 @@ class TestNodeConnectDetachNetwork:
 
     def test_node_detach_network_no_such_nic(self, switchinit):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'node-99')
@@ -805,16 +806,16 @@ class TestNodeConnectDetachNetwork:
 
     def test_node_detach_network_node_not_in_project(self, switchinit):
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', '99-eth0', 'DE:AD:BE:EF:20:14')
         api.project_create('anvil-nextgen')
-#        api.project_connect_node('anvil-nextgen', 'node-99')
+        #        api.project_connect_node('anvil-nextgen', 'node-99')
         network_create_simple('hammernet', 'anvil-nextgen')
         api.port_connect_nic('sw0', '3', 'node-99', '99-eth0')
-#        api.node_connect_network('node-99', '99-eth0', 'hammernet')
+        #        api.node_connect_network('node-99', '99-eth0', 'hammernet')
 
         with pytest.raises(api.ProjectMismatchError):
             api.node_detach_network('node-99', '99-eth0', 'hammernet')
@@ -1035,7 +1036,7 @@ class TestHeadnodeConnectDetachNetwork:
         api.headnode_create('hn-0', 'anvil-nextgen', 'base-headnode')
         api.headnode_create_hnic('hn-0', 'hn-0-eth0')
         network_create_simple('hammernet', 'anvil-nextgen')
-#        api.headnode_connect_network('hn-0', 'hn-0-eth0', 'hammernet')
+        #        api.headnode_connect_network('hn-0', 'hn-0-eth0', 'hammernet')
 
         api.headnode_detach_network('hn-0', 'hn-0-eth0')
 
@@ -1068,7 +1069,7 @@ class TestHeadnodeFreeze:
     def patch_start(self, monkeypatch):
         def start(self):
             self.dirty = False
-        monkeypatch.setattr(model.Headnode, 'start', start)
+            monkeypatch.setattr(model.Headnode, 'start', start)
 
     def _prep(self):
         """Helper to set up common state."""
@@ -1170,10 +1171,10 @@ class TestNetworkCreateDelete:
         api.project_create('anvil-nextgen')
         network_create_simple('hammernet', 'anvil-nextgen')
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', 'eth0', 'DE:AD:BE:EF:20:14')
         api.project_connect_node('anvil-nextgen', 'node-99')
         api.port_connect_nic('sw0', '3', 'node-99', 'eth0')
@@ -1192,10 +1193,10 @@ class TestNetworkCreateDelete:
         api.project_create('anvil-nextgen')
         network_create_simple('hammernet', 'anvil-nextgen')
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('node-99', 'eth0', 'DE:AD:BE:EF:20:14')
         api.project_connect_node('anvil-nextgen', 'node-99')
         api.port_connect_nic('sw0', '3', 'node-99', 'eth0')
@@ -1346,23 +1347,53 @@ class TestSwitch:
         }
 
 
+# class REVERT:
+#     def test_revert_port_no_changes(self, switchinit):
+#         #api.switch_register('sw0', type=MOCK_SWITCH_TYPE,
+#         #                    username="switch_user", password="switch_pass", hostname="switchname")
+#         #api.switch_register_port('sw0', '3')
+#         port = api._must_find(model.Port, '3')
+#         api.node_register('compute-01', obm={
+#             "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+#             "host": "ipmihost",
+#             "user": "root",
+#             "password": "tapeworm"})
+#         api.node_register_nic('compute-01', 'eth0', 'DE:AD:BE:EF:20:14')
+#         api.port_connect_nic('sw0', '3', 'compute-01', 'eth0')
+
+#         api.project_create('anvil-nextgen')
+#         api.project_connect_node('anvil-nextgen', 'compute-01')
+#         network_create_simple('hammernet', 'anvil-nextgen')
+#         api.node_connect_network('compute-01', 'eth0', 'hammernet')
+#         deferred.apply_networking()
+#         before_switch = port.owner.get_port_networks([port])
+#         before_haas = json.loads(api.show_port('3'))
+#         api.revert_port('3')
+#         deferred.apply_networking()
+#         after_haas = json.loads(api.show_port('3'))
+#         after_switch = port.owner.get_port_networks([port])
+
+#         assert before_haas == after_haas and before_switch == after_switch
+
+
+
 class TestPortConnectDetachNic:
 
     def test_port_connect_nic_success(self, switchinit):
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('compute-01', 'eth0', 'DE:AD:BE:EF:20:14')
         api.port_connect_nic('sw0', '3', 'compute-01', 'eth0')
 
     def test_port_connect_nic_no_such_switch(self):
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('compute-01', 'eth0', 'DE:AD:BE:EF:20:14')
         with pytest.raises(api.NotFoundError):
             api.port_connect_nic('sw0', '3', 'compute-01', 'eth0')
@@ -1374,10 +1405,10 @@ class TestPortConnectDetachNic:
                             password="switch_pass",
                             hostname="switchname")
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('compute-01', 'eth0', 'DE:AD:BE:EF:20:14')
         with pytest.raises(api.NotFoundError):
             api.port_connect_nic('sw0', '3', 'compute-01', 'eth0')
@@ -1400,19 +1431,19 @@ class TestPortConnectDetachNic:
                             hostname="switchname")
         api.switch_register_port('sw0', '3')
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         with pytest.raises(api.NotFoundError):
             api.port_connect_nic('sw0', '3', 'compute-01', 'eth0')
 
     def test_port_connect_nic_already_attached_to_same(self, switchinit):
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('compute-01', 'eth0', 'DE:AD:BE:EF:20:14')
         api.port_connect_nic('sw0', '3', 'compute-01', 'eth0')
         with pytest.raises(api.DuplicateError):
@@ -1422,10 +1453,10 @@ class TestPortConnectDetachNic:
                                                                switchinit):
         api.switch_register_port('sw0', '4')
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('compute-01', 'eth0', 'DE:AD:BE:EF:20:14')
         api.port_connect_nic('sw0', '3', 'compute-01', 'eth0')
         with pytest.raises(api.DuplicateError):
@@ -1434,15 +1465,15 @@ class TestPortConnectDetachNic:
     def test_port_connect_nic_port_already_attached_differently(self,
                                                                 switchinit):
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register('compute-02', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('compute-01', 'eth0', 'DE:AD:BE:EF:20:14')
         api.node_register_nic('compute-02', 'eth1', 'DE:AD:BE:EF:20:15')
         api.port_connect_nic('sw0', '3', 'compute-01', 'eth0')
@@ -1451,10 +1482,10 @@ class TestPortConnectDetachNic:
 
     def test_port_detach_nic_success(self, switchinit):
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('compute-01', 'eth0', 'DE:AD:BE:EF:20:14')
         api.port_connect_nic('sw0', '3', 'compute-01', 'eth0')
         api.port_detach_nic('sw0', '3')
@@ -1471,10 +1502,10 @@ class TestPortConnectDetachNic:
                             hostname="switchname")
         api.switch_register_port('sw0', '3')
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('compute-01', 'eth0', 'DE:AD:BE:EF:20:14')
         with pytest.raises(api.NotFoundError):
             api.port_detach_nic('sw0', '3')
@@ -1482,10 +1513,10 @@ class TestPortConnectDetachNic:
     def port_detach_nic_node_not_free(self, switchinit):
         """should refuse to detach a nic if it has pending actions."""
         api.node_register('compute-01', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('compute-01', 'eth0', 'DE:AD:BE:EF:20:14')
         api.port_connect_nic('sw0', '3', 'compute-01', 'eth0')
 
@@ -1514,26 +1545,26 @@ class TestQuery:
         for nic in actual['nics']:
             assert nic in expected['nics']
             expected['nics'].remove(nic)
-        assert len(expected['nics']) == 0
-        actual['nics'] = []
-        assert expected == actual
+            assert len(expected['nics']) == 0
+            actual['nics'] = []
+            assert expected == actual
 
     def test_free_nodes(self):
         api.node_register('master-control-program', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register('robocop', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register('data', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         result = json.loads(api.list_nodes("free"))
         # For the lists to be equal, the ordering must be the same:
         result.sort()
@@ -1561,20 +1592,20 @@ class TestQuery:
     def test_some_non_free_nodes(self):
         """Make sure that allocated nodes don't show up in the free list."""
         api.node_register('master-control-program', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register('robocop', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register('data', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
 
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'robocop')
@@ -1592,10 +1623,10 @@ class TestQuery:
         listed.
         """
         api.node_register('robocop', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('robocop', 'eth0', 'DE:AD:BE:EF:20:14')
         api.node_register_nic('robocop', 'wlan0', 'DE:AD:BE:EF:20:15')
 
@@ -1629,10 +1660,10 @@ class TestQuery:
 
     def test_show_node_unavailable(self):
         api.node_register('robocop', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('robocop', 'eth0', 'DE:AD:BE:EF:20:14')
         api.node_register_nic('robocop', 'wlan0', 'DE:AD:BE:EF:20:15')
 
@@ -1664,10 +1695,10 @@ class TestQuery:
         api.switch_register_port('sw0', '1')
         api.switch_register_port('sw0', '2')
         api.node_register('robocop', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register_nic('robocop', 'eth0', 'DE:AD:BE:EF:20:14')
         api.node_register_nic('robocop', 'wlan0', 'DE:AD:BE:EF:20:15')
 
@@ -1710,20 +1741,20 @@ class TestQuery:
 
     def test_project_nodes_exist(self):
         api.node_register('master-control-program', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register('robocop', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register('data', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
 
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'master-control-program')
@@ -1764,20 +1795,20 @@ class TestQuery:
     def test_some_nodes_in_project(self):
         """Test that only assigned nodes are in the project."""
         api.node_register('master-control-program', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register('robocop', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.node_register('data', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
 
         api.project_create('anvil-nextgen')
         api.project_connect_node('anvil-nextgen', 'robocop')
@@ -1798,9 +1829,9 @@ class TestQuery:
         # For the lists to be equal, the ordering must be the same:
         result.sort()
         assert result == [
-                'private',
-                'public',
-                'pxe'
+            'private',
+            'public',
+            'pxe'
         ]
 
     def test_no_project_networks(self):
@@ -1944,9 +1975,9 @@ class TestFancyNetworkCreate:
                 assert network.creator is None
                 assert network.access is project_db
                 assert network.allocated is allocated
-            network = api._must_find(model.Network, 'hammernet' +
-                                     project_api + '35')
-            assert network.network_id == '35'
+                network = api._must_find(model.Network, 'hammernet' +
+                                         project_api + '35')
+                assert network.network_id == '35'
 
 
 class TestDryRun:
@@ -1958,9 +1989,9 @@ class TestDryRun:
         """Check that power-cycle behaves reasonably under @no_dry_run."""
         api.project_create('anvil-nextgen')
         api.node_register('node-99', obm={
-                  "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
-                  "host": "ipmihost",
-                  "user": "root",
-                  "password": "tapeworm"})
+            "type": "http://schema.massopencloud.org/haas/v0/obm/ipmi",
+            "host": "ipmihost",
+            "user": "root",
+            "password": "tapeworm"})
         api.project_connect_node('anvil-nextgen', 'node-99')
         api.node_power_cycle('node-99')
