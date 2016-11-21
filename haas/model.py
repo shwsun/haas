@@ -320,6 +320,80 @@ def _on_virt_uri(args_list):
     return [args_list[0], '--connect', libvirt_endpoint] + args_list[1:]
 
 
+class Vpnnode(db.Model):
+    # FIXME: a vpn node means it is a physical node but specified as vpn server.
+    # Design is to support multiple virtual nic on the registed nic.
+    """A vpn node supporing VPNaaS to administer a project."""
+    id = db.Column(db.Integer, primary_key=True)
+    label = db.Column(db.String, nullable=False)
+
+    # The project to which this Vpnnode belongs:
+    project_id = db.Column(db.ForeignKey('project.id'), nullable=False)
+    project = db.relationship(
+        "Project", backref=db.backref('vpnnodes', uselist=True))
+
+    # The Obm info is fetched from the obm class and its respective subclass
+    # pertaining to the node
+    obm_id = db.Column(db.Integer, db.ForeignKey('obm.id'), nullable=False)
+    obm = db.relationship("Obm",
+                          uselist=False,
+                          backref="node",
+                          single_parent=True,
+                          cascade='all, delete-orphan')
+
+
+class Vpnnic(db.Model):
+    # FIXME: right now I am doing the same thing as the hnic is doing - creating virtual nics.
+    """a network interface for a vpnnode"""
+    id = db.Column(db.Integer, primary_key=True)
+    label = db.Column(db.String, nullable=False)
+
+    # The Vpnnode to which this Vpnnic belongs:
+    owner_id = db.Column(db.ForeignKey('vpnnode.id'), nullable=False)
+    owner = db.relationship("Vpnnode", backref=db.backref('vpnnics'))
+
+    # The network to which this Hnic is attached.
+    network_id = db.Column(db.ForeignKey('network.id'))
+    network = db.relationship("Network", backref=db.backref('vpnnics'))
+
+    # FIXME:
+    # The UDP port that HIL use to spawn VPN service
+    udp_port = db.Column(db.Integer, primary_key=True)
+
+    # We need a guaranteed unique name to spawn/kill vpn processes.
+    # The name is therefore a function of a uuid:
+    uuid = db.Column(db.String, nullable=False, unique=True)
+
+    def __init__(self, vpnnode, network, label, udp_port):
+        """Create an Vpnnic attached to the given vpnnode. with the given
+        label.
+        """
+        self.owner = vpnnode
+        self.network = network
+        self.uuid = str(uuid.uuid1())
+        self.label = label
+        self.udp_port = udp_port
+
+    @no_dry_run
+    def create(self):
+        """Create the vpnnic within livbirt.
+
+        XXX: This is a noop if the Vpnnic isn't connected to a network. This
+        means that the vpnnode won't have a corresponding nic, even a
+        disconnected one.
+        """
+        if not self.network:
+            # It is non-trivial to make a NIC not connected to a network, so
+            # do nothing at all instead.
+            return
+        vlan_no = str(self.network.network_id)
+        bridge = 'br-vlan%s' % vlan_no
+        check_call(_on_virt_uri(['virsh',
+                                 'attach-interface', self.owner._vmname(),
+                                 'bridge', bridge,
+                                 '--config']))
+
+
 class Headnode(db.Model):
     """A virtual machine used to administer a project."""
     id = db.Column(db.Integer, primary_key=True)
