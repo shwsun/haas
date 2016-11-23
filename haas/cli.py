@@ -13,8 +13,6 @@
 # governing permissions and limitations under the License.
 
 """This module implements the HaaS command line tool."""
-from haas import config, server
-from haas.config import cfg
 
 import inspect
 import json
@@ -26,6 +24,9 @@ import schema
 import abc
 
 from functools import wraps
+
+from haas import config, server
+from haas.config import cfg
 
 command_dict = {}
 usage_dict = {}

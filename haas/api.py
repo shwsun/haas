@@ -21,13 +21,13 @@ import json
 from schema import Schema, Optional
 
 from haas import model
-from haas.model import db
 from haas.auth import get_auth_backend
-from haas.config import cfg
-from haas.rest import rest_call
 from haas.class_resolver import concrete_class_for
-from haas.network_allocator import get_network_allocator
+from haas.config import cfg
 from haas.errors import *
+from haas.model import db
+from haas.network_allocator import get_network_allocator
+from haas.rest import rest_call
 
 
 # Project Code #

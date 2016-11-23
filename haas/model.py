@@ -21,20 +21,23 @@ Extensions are permitted to create new database objects by subclassing from
 `db.Model`.
 """
 
-# from sqlalchemy import *
-# from sqlalchemy.ext.declarative import declarative_base, declared_attr
-# from sqlalchemy.orm import relationship, sessionmaker,backref
-from flask.ext.sqlalchemy import SQLAlchemy
-from subprocess import call, check_call, Popen, PIPE
-from haas.flaskapp import app
-from haas.network_allocator import get_network_allocator
-from haas.config import cfg
-from haas.dev_support import no_dry_run
-from haas.errors import OBMError
 import uuid
 import xml.etree.ElementTree
 import logging
 import os
+
+from flask.ext.sqlalchemy import SQLAlchemy
+from subprocess import call, check_call, Popen, PIPE
+
+# from sqlalchemy import *
+# from sqlalchemy.ext.declarative import declarative_base, declared_attr
+# from sqlalchemy.orm import relationship, sessionmaker,backref
+
+from haas.config import cfg
+from haas.dev_support import no_dry_run
+from haas.errors import OBMError
+from haas.flaskapp import app
+from haas.network_allocator import get_network_allocator
 
 db = SQLAlchemy(app)
 
@@ -321,7 +324,7 @@ def _on_virt_uri(args_list):
 
 
 class Vpnnode(db.Model):
-    # FIXME: a vpn node means it is a physical node but specified as vpn server.
+    # FIXME: a vpn node means it is a physical node but specified as vpn server
     # Design is to support multiple virtual nic on the registed nic.
     """A vpn node supporing VPNaaS to administer a project."""
     id = db.Column(db.Integer, primary_key=True)
@@ -343,7 +346,8 @@ class Vpnnode(db.Model):
 
 
 class Vpnnic(db.Model):
-    # FIXME: right now I am doing the same thing as the hnic is doing - creating virtual nics.
+    # FIXME: right now I am doing the same thing as the hnic is doing
+    #        - creating virtual nics.
     """a network interface for a vpnnode"""
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String, nullable=False)
