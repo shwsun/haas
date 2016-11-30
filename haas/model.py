@@ -323,17 +323,25 @@ def _on_virt_uri(args_list):
     return [args_list[0], '--connect', libvirt_endpoint] + args_list[1:]
 
 
+class Vpn(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    label = db.Column(db.String, nullable=False)
+    project = db.Column(db.String)
+    network = db.Column(db.String)
+    key_path = db.Column(db.String)
+    vpnnic_id = db.Column(db.Integer,
+                          db.ForeignKey('vpnnic.id'),
+                          nullable=False)
+    vpnnic = db.relationship("Vpnnic", backref=db.backref('vpnnic',
+                                                          uselist=True))
+
+
 class Vpnnode(db.Model):
     # FIXME: a vpn node means it is a physical node but specified as vpn server
     # Design is to support multiple virtual nic on the registed nic.
     """A vpn node supporing VPNaaS to administer a project."""
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String, nullable=False)
-
-    # The project to which this Vpnnode belongs:
-    project_id = db.Column(db.ForeignKey('project.id'), nullable=False)
-    project = db.relationship(
-        "Project", backref=db.backref('vpnnodes', uselist=True))
 
     # The Obm info is fetched from the obm class and its respective subclass
     # pertaining to the node
@@ -356,6 +364,11 @@ class Vpnnic(db.Model):
     owner_id = db.Column(db.ForeignKey('vpnnode.id'), nullable=False)
     owner = db.relationship("Vpnnode", backref=db.backref('vpnnics'))
 
+    # The project which this vpnnic belongs
+    project_id = db.Column(db.ForeignKey('project.id'), nullable=False)
+    project = db.relationship("Project", backref=db.backref('vpnnodes',
+                                                            uselist=True))
+
     # The network to which this Hnic is attached.
     network_id = db.Column(db.ForeignKey('network.id'))
     network = db.relationship("Network", backref=db.backref('vpnnics'))
@@ -368,12 +381,13 @@ class Vpnnic(db.Model):
     # The name is therefore a function of a uuid:
     uuid = db.Column(db.String, nullable=False, unique=True)
 
-    def __init__(self, vpnnode, network, label, udp_port):
+    def __init__(self, vpnnode, network, project, label, udp_port):
         """Create an Vpnnic attached to the given vpnnode. with the given
         label.
         """
         self.owner = vpnnode
         self.network = network
+        self.project = project
         self.uuid = str(uuid.uuid1())
         self.label = label
         self.udp_port = udp_port

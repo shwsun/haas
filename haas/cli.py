@@ -405,6 +405,15 @@ def project_delete(project):
 
 
 @cmd
+def project_vpn_create(vpn, project, network, key):
+    url = object_url('vpn', vpn,
+                     'project', project,
+                     'network', network,
+                     'key', key)
+    do_put(url)
+
+
+@cmd
 def headnode_create(headnode, project, base_img):
     """Create a <headnode> in a <project> with <base_img>"""
     url = object_url('headnode', headnode)

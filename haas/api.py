@@ -19,6 +19,7 @@ TODO: Spec out and document what sanitization is required.
 import json
 
 from schema import Schema, Optional
+from subprocess import Popen
 
 from haas import model
 from haas.auth import get_auth_backend
@@ -86,6 +87,30 @@ def project_delete(project):
         raise BlockedError("Project still has a headnode")
     db.session.delete(project)
     db.session.commit()
+
+
+@rest_call('PUT', '/vpn/<vpn>/project/<project>/network/<network>/key/<key>',
+           Schema({'vpn': basestring,
+                   'project': basestring,
+                   'network': basestring,
+                   'key': basestring}))
+def project_vpn_create(vpn, project, network, key):
+    vnic = model.Vpnnic.query.filter_by().first()
+
+    if vnic is None:
+        raise BlockedError("There are no available vnics.")
+
+    # add vpn to database
+    vpn = model.Vpn(vpn, project, network, vnic.id)
+
+    # send key
+    with open(key, 'r') as file1:
+        with open("/etc/openvpn/" + vpn + ".pem", 'w') as file2:
+            for line in file1:
+                file2.write(line)
+
+    # start service
+    process = Popen(['systemctl', 'start', 'openvpn@' + vpn + '.service'])
 
 
 @rest_call('POST', '/project/<project>/connect_node', Schema({
