@@ -332,8 +332,14 @@ class Vpn(db.Model):
     vpnnic_id = db.Column(db.Integer,
                           db.ForeignKey('vpnnic.id'),
                           nullable=False)
-    vpnnic = db.relationship("Vpnnic", backref=db.backref('vpnnic',
-                                                          uselist=True))
+    vpnnic = db.relationship("Vpnnic", 
+                             backref=db.backref('vpn', uselist=True))
+
+    def __init__(vpn, project, network, key):
+        self.label = vpn
+        self.project = project
+        self.network = network
+        self.key_path = key
 
 
 class Vpnnode(db.Model):
@@ -348,7 +354,7 @@ class Vpnnode(db.Model):
     obm_id = db.Column(db.Integer, db.ForeignKey('obm.id'), nullable=False)
     obm = db.relationship("Obm",
                           uselist=False,
-                          backref="node",
+                          backref="vpnnode",
                           single_parent=True,
                           cascade='all, delete-orphan')
 
@@ -381,15 +387,15 @@ class Vpnnic(db.Model):
     # The name is therefore a function of a uuid:
     uuid = db.Column(db.String, nullable=False, unique=True)
 
-    def __init__(self, vpnnode, network, project, label, udp_port):
+    def __init__(self, label, vpnnode, project, network, udp_port):
         """Create an Vpnnic attached to the given vpnnode. with the given
         label.
         """
+        self.label = label
         self.owner = vpnnode
         self.network = network
         self.project = project
         self.uuid = str(uuid.uuid1())
-        self.label = label
         self.udp_port = udp_port
 
     @no_dry_run

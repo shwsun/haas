@@ -406,12 +406,43 @@ def project_delete(project):
 
 @cmd
 def project_vpn_create(vpn, project, network, key):
-    url = object_url('vpn', vpn,
-                     'project', project,
+    url = object_url('project', project,
+                     'vpn', vpn,
                      'network', network,
                      'key', key)
     do_put(url)
 
+@cmd
+def project_vpnnode_create(vpnnode, subtype, *args):
+    obm_api = "http://schema.massopencloud.org/haas/v0/obm/"
+    obm_types = ["ipmi", "mock"]
+
+    if subtype in obm_types:
+        if len(args) == 3:
+            obminfo = {"type": obm_api + subtype, "host": args[0],
+                       "user": args[1], "password": args[2]
+                       }
+        else:
+            sys.stderr.write('ERROR: subtype ' + subtype +
+                             ' requires exactly 3 arguments\n')
+            sys.stderr.write('<hostname> <ipmi-username> <ipmi-password>\n')
+            return
+    else:
+        sys.stderr.write('ERROR: Wrong OBM subtype supplied\n')
+        sys.stderr.write('Supported OBM sub-types: ipmi, mock\n')
+        return
+
+    url = object_url('vpnnode', vpnnode)
+    do_put(url, data={"obm": obminfo})
+
+@cmd
+def project_vpnnic_create(vpnnic, vpnnode, project, network, udp_port):
+    url = object_url('project', project,
+                     'vpnnic', vpnnic,
+                     'vpnnode', vpnnode,
+                     'network', network,
+                     'udp_port', udp_port)
+    do_put(url)
 
 @cmd
 def headnode_create(headnode, project, base_img):

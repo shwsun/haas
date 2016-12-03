@@ -89,9 +89,9 @@ def project_delete(project):
     db.session.commit()
 
 
-@rest_call('PUT', '/vpn/<vpn>/project/<project>/network/<network>/key/<key>',
-           Schema({'vpn': basestring,
-                   'project': basestring,
+@rest_call('PUT', '/project/<project>/vpn/<vpn>/network/<network>/key/<key>',
+           Schema({'project': basestring,
+                   'vpn': basestring,
                    'network': basestring,
                    'key': basestring}))
 def project_vpn_create(vpn, project, network, key):
@@ -111,6 +111,56 @@ def project_vpn_create(vpn, project, network, key):
 
     # start service
     process = Popen(['systemctl', 'start', 'openvpn@' + vpn + '.service'])
+
+
+@rest_call('PUT', '/vpnnode/<vpnnode>', schema=Schema({
+    'vpnnode': basestring,
+    'obm': {
+        'type': basestring,
+        Optional(object): object,
+    },
+}))
+def project_vpnnode_create(vpnnode, **kwargs):
+    get_auth_backend().require_admin()
+    _assert_absent(model.Vpnnode, vpnnode)
+    obm_type = kwargs['obm']['type']
+
+    cls = concrete_class_for(model.Obm, obm_type)
+    if cls is None:
+        raise BadArgumentError('%r is not a valid OBM type.' % obm_type)
+    cls.validate(kwargs['obm'])
+    vpnnode_obj = model.Vpnnode(label=vpnnode, obm=cls(**kwargs['obm']))
+
+    db.session.add(vpnnode_obj)
+    db.session.commit()
+
+
+@rest_call('PUT', '/project/<project>' +
+                  '/vpnnic/<vpnnic>' +
+                  '/vpnnode/<vpnnode>' +
+                  '/network/<network>' +
+                  '/udp_port/<udp_port>', Schema({
+                                                  'project': basestring,
+                                                  'vpnnic': basestring,
+                                                  'vpnnode': basestring,
+                                                  'network': basestring,
+                                                  'udp_port': basestring,
+                                                }))
+def project_vpnnic_create(project, vpnnic, vpnnode, network, udp_port):
+    get_auth_backend().require_admin()
+
+    # TODO: We need to see if the node is saturated
+    # check to see if nic exists on vpnnode
+    project = _must_find(model.Project, project)
+    network = _must_find(model.Network, network)
+    vpnnode = _must_find(model.Vpnnode, vpnnode)
+    _assert_absent_n(vpnnode, model.Vpnnic, vpnnic)
+    # check to see if port is free
+
+    vpnnic = model.Vpnnic(vpnnic, vpnnode, project, network, udp_port)
+
+    db.session.add(vpnnic)
+    db.session.commit()
 
 
 @rest_call('POST', '/project/<project>/connect_node', Schema({
