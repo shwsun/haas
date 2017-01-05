@@ -812,6 +812,11 @@ def help(*commands):
         sys.stdout.write('  %s\n' % usage_dict[name])
         sys.stdout.write('      %s\n' % command_dict[name].__doc__)
 
+@cmd
+def query_switches(chann):
+    url = object_url('attachments')
+    do_get(url, data={'chann': chann})
+
 
 def main():
     """Entry point to the CLI.
