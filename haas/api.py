@@ -1170,6 +1170,42 @@ def stop_console(nodename):
     node.obm.delete_console()
 
 
+# NetEx utils code #
+####################
+@rest_call('GET', '/networks/<channel>', Schema({'channel': basestring}))
+def show_channel(channel):
+    """This rest api call is specifically designed for NetEx agent.
+    """
+    get_auth_backend().require_admin()
+
+    # query all the network object to get network of this channel
+    networks = db.session.query(model.Network).all()
+    for n in networks:
+        if n.network_id == channel:
+            network = n  # network that owns the channel
+
+    # get attachments of this project
+    nodes = {}
+    switches = {}
+
+    for attachment in network.attachments:
+        node = {
+            'nic': attachment.nic.label,
+            'channel': attachment.channel,
+            'project': attachment.nic.owner.project.label
+        }
+        nodes[attachment.nic.owner.label] = node
+
+        switch = {
+            'switch': attachment.nic.port.owner.label,
+            'port': attachment.nic.port.label
+        }
+        switches[attachment.nic.port.owner, label] = switch
+
+    result = {nodes, switches}
+    return json.dumps(result, sort_keys=True)
+
+
 # Helper functions #
 ####################
 def _assert_absent(cls, name):

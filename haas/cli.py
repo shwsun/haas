@@ -775,6 +775,11 @@ def stop_console(node):
 
 
 @cmd
+def show_channel(channel):
+    url = object_url('network')
+    do_get(url, data={'channel': channel})
+
+@cmd
 def create_admin_user(username, password):
     """Create an admin user. Only valid for the database auth backend.
 
